@@ -1,16 +1,14 @@
+
+<div align="center">
 <a href="https://github.com/Gero1999/shiny-objection-game"> <img src="icon.png" alt="Logo" width="100" height="80"/> </a>
-
 <h3 align="center">
-
 Shiny Objection
-
 </h3>
-
 <p align="center">
-
 Can you win the case & defend your client? <br /> <a href=""><strong>Explore the docs »</strong></a> <br /> ·
-
 </p>
+</div>
+
 
 Welcome to Shiny Objection, the legal drama game where you take on the role of a courtroom superstar! Throw objections, win cases, and have fun in this open-source simulation. 🚀
 
