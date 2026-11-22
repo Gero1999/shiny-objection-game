@@ -22,7 +22,7 @@ body { background: var(--paper); color: var(--ink); }
     border-bottom: 3px solid #ca974d;
 }
 .wordmark { font-family: Georgia, serif; font-size: 1.25rem; font-weight: bold; }
-.practice { margin-left: auto; color: #e7d5b4; font-size: .85rem; }
+.practice { margin-left: auto; color: #e7d5b4; font-size: .85rem; overflow-wrap: anywhere; text-align: right; }
 .room { max-width: 72rem; margin: auto; padding: 1.6rem 1rem 3rem; }
 .case-heading { margin-bottom: 1.2rem; border-bottom: 1px solid var(--rule); padding-bottom: 1rem; }
 .case-heading h1, h2, h3 { font-family: Georgia, serif; }
@@ -34,6 +34,9 @@ body { background: var(--paper); color: var(--ink); }
 .panel { background: var(--panel); border: 1px solid var(--rule); border-radius: .55rem; padding: 1.25rem; }
 .panel h2 { font-size: 1.55rem; }
 .panel h3 { font-size: 1.16rem; margin-top: 1.15rem; }
+.model-setup { max-width: 38rem; margin: 1rem auto; }
+.model-setup h1 { font: bold 2.1rem Georgia, serif; }
+#change_model { margin-top: .8rem; }
 .briefing-text { max-width: 63ch; line-height: 1.65; }
 .status-line { color: var(--muted); font-size: .88rem; font-weight: 650; margin-bottom: .3rem; }
 .role-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
