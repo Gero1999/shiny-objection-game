@@ -29,6 +29,7 @@ planning documents. See [AGENTS.md](AGENTS.md) for the development guidelines.
 
 - [Game design](docs/game-design.md)
 - [Case authoring](docs/case-authoring.md)
+- [Technical architecture](docs/architecture.md)
 
 ## Contributing
 
