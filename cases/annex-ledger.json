@@ -84,7 +84,8 @@
         },
         "mira-heard": {
           "text": "A clerk told me Neri had permission. That is why I did not call the supervisor.",
-          "topics": ["heard", "told", "call", "notice"]
+          "topics": ["heard", "told", "call", "notice"],
+          "notice_purpose": true
         }
       },
       "scripts": {
