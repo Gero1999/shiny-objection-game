@@ -1,25 +1,32 @@
+# Shiny Objection
 
-<div align="center">
-<a href="https://github.com/Gero1999/shiny-objection-game"> <img src="icon.png" alt="Logo" width="100" height="80"/> </a>
-<h3 align="center">
-Shiny Objection
-</h3>
-<p align="center">
-Can you win the case & defend your client? <br /> <a href=""><strong>Explore the docs »</strong></a> <br /> ·
-</p>
-</div>
+<img src="icon.png" alt="Shiny Objection logo" width="100">
 
+Shiny Objection is a fictional courtroom game designed for Shiny for Python.
+Play as the prosecutor or defense attorney, investigate leads, and use the
+evidence you find to question witnesses and argue your side of the case.
 
-Welcome to Shiny Objection, the legal drama game where you take on the role of a courtroom superstar! Throw objections, win cases, and have fun in this open-source simulation. 🚀
+## How a case plays
 
-⚠️ Note: This project is still under development. There’s plenty more to come, and we’d love your help! 🎮
+1. Receive a randomly selected case, read its opening police briefing, and
+   choose a side.
+2. Tell the game what you want to investigate. Review the evidence and
+   potential witnesses your leads uncover, then choose two witnesses.
+3. Examine your witnesses and cross-examine the other side's. Present
+   exhibits, object to improper questions or evidence, and respond when
+   opposing counsel objects.
+4. Make a closing argument. The jury explains its verdict using the trial
+   record. If there is a conviction, the court hears arguments on the sentence.
 
-### How You Can Help 🤝
+Each case has an authored set of facts, evidence, and character motivations.
+Players will be able to connect a hosted model using their own API token or use
+an Ollama connection for dialogue.
 
-Excited to have contributions from the community. Whether it’s fixing bugs, adding new features, or suggesting improvements, always welcome!
+## Project status
 
-### How to Contribute: Fork this repo 🍴
+The game is in design. This repository contains the project context and
+planning documents. See [AGENTS.md](AGENTS.md) for the development guidelines.
 
--   Create a new branch 🌱
--   Work on your changes ✨
--   Submit a pull request 📨
+## Contributing
+
+Open an issue for a gameplay idea or start a branch and submit a pull request.
