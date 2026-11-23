@@ -13,6 +13,8 @@ _WITNESS_LEADS = {"mira": "keys", "ivo": "closing clock", "lio": "dry store", "s
 def ready_game(side: Side, witnesses: tuple[str, str], seed: int = 1) -> Game:
     game = Game(load_case(CASE_PATH), seed)
     game.choose_side(side)
+    if side == Side.DEFENSE:
+        game.finish_consultation()
     for witness in witnesses:
         game.investigate(_WITNESS_LEADS[witness])
     game.finish_investigation()

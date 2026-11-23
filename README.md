@@ -12,6 +12,8 @@ A civic ledger is missing at closing. The shift record puts an archivist on
 duty, but the police report can’t say who moved it. A key cabinet, a hallway
 clock, and a dry-store receipt offer different ways into the case.
 
+If you play defense, you can first talk privately with your client about what happened and where to look.
+
 | Stage | Your move |
 | --- | --- |
 | **Briefing** | Read the police report and choose prosecution or defense. |

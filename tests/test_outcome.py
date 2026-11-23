@@ -23,6 +23,7 @@ class OutcomeTests(unittest.TestCase):
     def test_rival_can_convict_and_player_can_earn_mitigation(self):
         game = Game(load_case(CASE_PATH), seed=1)
         game.choose_side(Side.DEFENSE)
+        game.finish_consultation()
         for request in ("keys", "closing clock", "maintenance"):
             game.investigate(request)
         game.finish_investigation()
