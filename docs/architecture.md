@@ -24,7 +24,7 @@ needs it, such as resuming a case or editing cases outside the repository.
 
 Load and validate each `CaseDefinition` once. Give each Shiny connection a
 fresh `GameState` in its `server` function. Store the case ID and random seed,
-chosen side, investigation budget, disclosed IDs, lineups, current phase,
+chosen side, investigation budget, private consultation chat, disclosed IDs, lineups, current phase,
 and pending move in that state. Keep discovery, disclosure, and admission
 as separate facts about an exhibit. Draw cases from a list sorted by ID so
 the same list and seed reproduce the draw. With the same seed and player
@@ -124,7 +124,7 @@ or invalid response leaves the decision pending so the player can retry.
 
 1. **Case and investigation.** Write one case from the [authoring guide](case-authoring.md).
    Prove the briefing reveals only its opening material and every valid
-   completed investigation path leaves two selectable witnesses.
+   completed investigation path leaves a selectable witness.
 2. **Trial and outcome.** Use a fake model through one direct and one cross
    from each side. Check that a sustained leading objection stops a direct
    question before the witness can answer, that the same ground alone can

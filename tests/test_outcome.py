@@ -1,7 +1,7 @@
 import unittest
 from dataclasses import replace
 
-from shiny_objection.cases import Examination, Side, load_case
+from shiny_objection.cases import Side, load_case
 from shiny_objection.game import Game, GameError
 from shiny_objection.outcome import deliberate, sentence
 from shiny_objection.trial import RecordEntry, Status, Trial
@@ -23,14 +23,16 @@ class OutcomeTests(unittest.TestCase):
     def test_rival_can_convict_and_player_can_earn_mitigation(self):
         game = Game(load_case(CASE_PATH), seed=1)
         game.choose_side(Side.DEFENSE)
+        game.finish_consultation()
         for request in ("keys", "closing clock", "maintenance"):
             game.investigate(request)
         game.finish_investigation()
-        game.choose_witnesses(("mira", "ivo"))
+        game.choose_witnesses(("sen",))
         trial = Trial(game)
 
         def show_leak(current):
             if current.turn.witness_id == "sen":
+                current.ask("What happened with the pipe?")
                 current.offer("maintenance-log")
 
         run_to_closing(trial, show_leak)
@@ -47,8 +49,6 @@ class OutcomeTests(unittest.TestCase):
         trial = Trial(ready_game(Side.PROSECUTION, ("lio", "sen")))
 
         def prove_charge(current):
-            if current.turn.examination != Examination.DIRECT:
-                return
             if current.turn.witness_id == "lio":
                 current.offer("closing-inventory")
                 current.offer("recovery-note")

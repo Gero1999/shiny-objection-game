@@ -1,7 +1,7 @@
 # Game design
 
 Shiny Objection is a fictional criminal trial game. The player investigates a
-case, chooses two witnesses, and argues either for the prosecution or for the
+case, chooses one witness, and argues either for the prosecution or for the
 defense. A good round lets the player identify why they won or lost and what
 they would do differently on a replay.
 
@@ -11,17 +11,18 @@ they would do differently on a replay.
 | --- | --- | --- |
 | Connection | Enter a hosted model token or connect to Ollama. | Check the selected model before starting the round. |
 | Briefing | Read the opening police report and choose a side. | Randomly select an authored case and show only the opening disclosures. Attribute observations and allegations to their sources. |
+| Defense consultation | Ask the client what happened and where to investigate. | Reveal only authored client accounts. These can be incomplete or misleading and stay outside the trial record. |
 | Investigation | Describe what to search, inspect, or ask about. | Match the request to an authored lead. Reveal the linked evidence and witness profiles. |
-| Witness selection | Choose two distinct witnesses from the discovered profiles. | Lock the player's selection. Pick two other witnesses using the rival's role-specific order. |
+| Witness selection | Choose one witness from the discovered profiles. | Lock the player's selection. Pick a different witness using the rival's role-specific order. |
 | Trial | Question witnesses, present exhibits, object, and reply to objections. | Alternate direct and cross-examination, rule on pending moves, and maintain the admitted record. |
 | Closing and verdict | Connect admitted testimony and exhibits to the elements of the charge. | Explain whether the evidence meets the fictional burden for each element. |
 | Sentencing | After a conviction, argue about the sentence. | Apply case-defined mitigation supported by the admitted record. |
 
 For the first case, start with three successful investigations. An already
 completed lead, an unmatched request, or a clarification costs no
-investigation. The player can stop once they have found at least two
-witnesses. The case must allow every path that reaches the investigation
-limit to uncover at least two selectable witnesses.
+investigation. The player can stop once they have found at least one
+witness. The case must allow every path that reaches the investigation
+limit to uncover at least one selectable witness.
 
 At the start of trial, show both lineups and disclose the rival's public
 witness profiles and exhibit list. Keep their private accounts and motives
@@ -31,12 +32,12 @@ available to reference. Admission determines what the jury can consider.
 
 ## Witness rounds
 
-The prosecution calls its two witnesses first, followed by the defense.
+The prosecution calls its witness first, followed by the defense.
 For each witness, the calling side conducts direct examination and the
 other side conducts cross-examination.
 
 - During their examination, the player can ask a question in plain language,
-  present an available exhibit, or end the examination.
+  offer an available exhibit in the same chat (for example, “Offer the handoff receipt”), or end the examination.
 - During the rival's examination, reveal one authored question or exhibit
   offer at a time. Pause for the player to pass or object before the witness
   answers or the exhibit takes effect.
@@ -101,7 +102,8 @@ and resolves any contradictions in that record that the case marks as
 material to an element. Otherwise acquit. Cite the exhibit numbers and
 testimony lines that mattered, including the missing proof on acquittal.
 
-Closing arguments let the player identify the relevant links between the
+The rival gives a short closing before the player's. Closing arguments let
+the player identify the relevant links between the
 record and their theory. An argument can call attention to evidence already
 in the record. The jury scores the supported links to the elements.
 

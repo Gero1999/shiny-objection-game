@@ -32,8 +32,8 @@ class CaseTests(unittest.TestCase):
     def test_investigation_path_cannot_strand_the_player(self):
         data = json.loads(CASE_PATH.read_text())
         for lead in data["leads"].values():
-            lead["witnesses"] = ["mira"]
-        with self.assertRaisesRegex(ValueError, "fewer than two witnesses"):
+            lead["witnesses"] = []
+        with self.assertRaisesRegex(ValueError, "without a witness"):
             self.load_modified(data)
 
     def load_modified(self, data):

@@ -15,9 +15,10 @@ clock, and a dry-store receipt offer different ways into the case.
 | Stage | Your move |
 | --- | --- |
 | **Briefing** | Read the police report and choose prosecution or defense. |
-| **Investigation** | Describe a lead in your own words. Collect exhibits and choose two witnesses to call. |
-| **Trial** | Question your witnesses, cross-examine the rival’s, and offer exhibits. Object to improper moves and respond when opposing counsel objects. |
-| **Verdict** | Make a closing argument. The jury explains its verdict from the admitted record. If there’s a conviction, the court considers mitigation. |
+| **Consultation** | On defense, talk privately with your client and ask where you should look. |
+| **Investigation** | Send a short lead in chat. Read the evidence and witness profiles it reveals, then choose one witness. |
+| **Trial** | Question your witness, cross-examine the rival’s, and type an offer such as “Offer the handoff receipt.” Object to improper moves and respond when opposing counsel objects. |
+| **Verdict** | Read the rival’s closing, then write your own. The jury explains its verdict from the admitted record. If there’s a conviction, the court considers mitigation. |
 
 > **Try a lead.** Enter “check the key cabinet,” then ask the clerk who kept
 > the register. Establishing its source gives you a foundation to offer it

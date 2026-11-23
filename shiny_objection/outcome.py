@@ -1,8 +1,9 @@
 """Evaluate the fictional charge and sentence from the admitted trial record."""
 
 from dataclasses import dataclass
+from textwrap import shorten
 
-from .game import GameError
+from .game import CLOSING_LIMIT, GameError, bounded
 from .trial import RecordEntry, Status, Trial
 
 
@@ -52,8 +53,7 @@ class SentenceResult:
 def deliberate(trial: Trial, argument: str, citations: tuple[int, ...] = ()) -> Verdict:
     if trial.turn is not None or trial.pending is not None:
         raise GameError("Finish the examinations before presenting a closing argument.")
-    if not argument.strip():
-        raise GameError("Write a short closing argument.")
+    argument = bounded(argument, CLOSING_LIMIT)
 
     admitted = {
         entry.number: entry for entry in trial.record
@@ -89,6 +89,25 @@ def deliberate(trial: Trial, argument: str, citations: tuple[int, ...] = ()) -> 
             ),
         )
     return Verdict(tuple(findings), argument.strip(), tuple(admitted[key] for key in dict.fromkeys(citations)), sentencing)
+
+
+def rival_closing(trial: Trial) -> str:
+    theory = trial.case.rival_closings[trial.side.other]
+    exhibits = [
+        entry for entry in trial.record
+        if entry.status == Status.ADMITTED and entry.proof_id in trial.case.exhibits
+    ]
+    if exhibits:
+        latest = exhibits[-1]
+        theory += f" Consider record #{latest.number}, {latest.text}."
+    return shorten(theory, width=CLOSING_LIMIT, placeholder="…")
+
+
+def verdict_summary(verdict: Verdict) -> str:
+    if verdict.convicted:
+        return "The admitted record proved every element beyond reasonable doubt."
+    element = next(finding.element for finding in verdict.findings if not finding.proven)
+    return f"The record left reasonable doubt on this element: {element}."
 
 
 def sentence(verdict: Verdict, requested: tuple[str, ...]) -> SentenceResult:

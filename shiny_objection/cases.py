@@ -44,6 +44,7 @@ class Statement:
     topics: tuple[str, ...]
     requires_exhibits: tuple[str, ...]
     notice_purpose: bool
+    delivery: str = ""
 
 
 @dataclass(frozen=True)
@@ -59,9 +60,17 @@ class Witness:
     name: str
     profile: str
     motive: str
+    demeanor: str
     statements: Mapping[str, Statement]
     scripts: Mapping[Examination, tuple[ScriptedMove, ...]]
     departures: Mapping[Examination, ScriptedMove]
+
+
+@dataclass(frozen=True)
+class Client:
+    name: str
+    greeting: str
+    statements: Mapping[str, Statement]
 
 
 @dataclass(frozen=True)
@@ -103,6 +112,7 @@ class CaseDefinition:
     charge: str
     briefing: str
     private_truth: str
+    client: Client
     opening_exhibits: tuple[str, ...]
     lead_budget: int
     leads: Mapping[str, Lead]
@@ -110,6 +120,7 @@ class CaseDefinition:
     witnesses: Mapping[str, Witness]
     rival_witnesses: Mapping[Side, tuple[str, ...]]
     rival_exhibits: Mapping[Side, tuple[str, ...]]
+    rival_closings: Mapping[Side, str]
     elements: tuple[Element, ...]
     sentence: Sentence
 
@@ -123,6 +134,16 @@ def _script(move: dict) -> ScriptedMove:
     )
 
 
+def _statements(data: dict) -> Mapping[str, Statement]:
+    return MappingProxyType({
+        key: Statement(
+            item["text"], tuple(item["topics"]), tuple(item.get("requires_exhibits", [])),
+            item.get("notice_purpose", False), item.get("delivery", ""),
+        )
+        for key, item in data.items()
+    })
+
+
 def _parse(data: dict) -> CaseDefinition:
     exhibits = {
         key: Exhibit(item["title"], item["text"], tuple(item.get("foundation", [])))
@@ -130,15 +151,7 @@ def _parse(data: dict) -> CaseDefinition:
     }
     witnesses = {}
     for key, item in data["witnesses"].items():
-        statements = {
-            statement_id: Statement(
-                statement["text"],
-                tuple(statement["topics"]),
-                tuple(statement.get("requires_exhibits", [])),
-                statement.get("notice_purpose", False),
-            )
-            for statement_id, statement in item["statements"].items()
-        }
+        statements = _statements(item["statements"])
         scripts = {
             exam: tuple(_script(move) for move in item["scripts"][exam])
             for exam in Examination
@@ -148,8 +161,8 @@ def _parse(data: dict) -> CaseDefinition:
             for exam, move in item.get("departures", {}).items()
         }
         witnesses[key] = Witness(
-            item["name"], item["profile"], item["motive"],
-            MappingProxyType(statements), MappingProxyType(scripts), MappingProxyType(departures),
+            item["name"], item["profile"], item["motive"], item.get("demeanor", ""),
+            statements, MappingProxyType(scripts), MappingProxyType(departures),
         )
 
     leads = {
@@ -178,6 +191,7 @@ def _parse(data: dict) -> CaseDefinition:
         charge=data["charge"],
         briefing=data["briefing"],
         private_truth=data["private_truth"],
+        client=Client(data["client"]["name"], data["client"]["greeting"], _statements(data["client"]["statements"])),
         opening_exhibits=tuple(data["opening_exhibits"]),
         lead_budget=data["lead_budget"],
         leads=MappingProxyType(leads),
@@ -189,6 +203,7 @@ def _parse(data: dict) -> CaseDefinition:
         rival_exhibits=MappingProxyType({
             side: tuple(data["rival"][side]["exhibits"]) for side in Side
         }),
+        rival_closings=MappingProxyType({side: data["rival"][side]["closing"] for side in Side}),
         elements=elements,
         sentence=Sentence(
             sentence["baseline"], sentence["minimum"], sentence["unit"],
@@ -220,8 +235,8 @@ def _check_leads(case: CaseDefinition) -> None:
             if key not in done and done.issuperset(lead.requires)
         ]
         if len(done) == case.lead_budget or not available:
-            if len(discovered) < 2:
-                raise ValueError("An investigation can finish with fewer than two witnesses")
+            if not discovered:
+                raise ValueError("An investigation can finish without a witness")
             return
         for key in available:
             walk(done | {key}, discovered.union(case.leads[key].witnesses))
@@ -232,8 +247,8 @@ def _check_leads(case: CaseDefinition) -> None:
 
 
 def _validate(case: CaseDefinition) -> None:
-    if len(case.witnesses) < 4:
-        raise ValueError("A case needs at least four witnesses")
+    if len(case.witnesses) < 2:
+        raise ValueError("A case needs at least two witnesses")
     statement_ids = [key for witness in case.witnesses.values() for key in witness.statements]
     proof_ids = set(statement_ids).union(case.exhibits)
     if len(proof_ids) != len(statement_ids) + len(case.exhibits):

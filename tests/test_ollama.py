@@ -3,7 +3,7 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from shiny_objection.cases import Ground, Statement
+from shiny_objection.cases import Ground, Lead, Statement
 from shiny_objection.models import ModelError, verify_connection
 from shiny_objection.ollama import OllamaDialogue
 
@@ -70,3 +70,15 @@ class TestOllamaHTTP(unittest.TestCase):
     def test_rejects_credentials_in_endpoint(self):
         with self.assertRaisesRegex(ModelError, "endpoint is invalid"):
             OllamaDialogue("smollm2:135m", "http://secret@localhost:11434")
+
+    def test_model_can_select_a_lead_without_receiving_its_unlocked_material(self):
+        leads = {"key-cabinet": Lead("Key cabinet", ("key",), ("private-log",), ("mira",), ())}
+        self.response["message"]["content"] = '{"lead_id":"key-cabinet"}'
+        self.assertEqual(self.dialogue.find_lead("Check whose key fit the lock", leads), "key-cabinet")
+        message = self.requests[0][1]["messages"][1]["content"]
+        self.assertNotIn("private-log", message)
+        self.assertNotIn("mira", message)
+
+        self.response["message"]["content"] = '{"lead_id":"invented"}'
+        with self.assertRaisesRegex(ModelError, "invalid investigation result"):
+            self.dialogue.find_lead("Find the answer", leads)

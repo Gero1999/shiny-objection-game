@@ -1,6 +1,7 @@
 """The courtroom turn order, objection rules, and admitted record."""
 
 import random
+import re
 from collections import deque
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
@@ -8,7 +9,7 @@ from enum import StrEnum
 from types import MappingProxyType
 
 from .cases import Examination, Ground, ScriptedMove, Side, Statement
-from .game import Game, GameError, Phase, mentions, words
+from .game import QUESTION_LIMIT, Game, GameError, Phase, bounded, mentions, words
 from .models import Dialogue, QuestionPlan, ScriptedDialogue
 
 
@@ -86,7 +87,7 @@ _GROUND_REASONS = {
 class Trial:
     def __init__(self, game: Game, dialogue: Dialogue | None = None):
         if game.phase != Phase.TRIAL or game.side is None:
-            raise GameError("Choose your two witnesses before starting the trial.")
+            raise GameError("Choose your witness before starting the trial.")
         self.case = game.case
         self.side = game.side
         self.exhibits = game.trial_exhibits()
@@ -135,14 +136,15 @@ class Trial:
 
     def prepare_question(self, question: str) -> QuestionRequest:
         turn = self._require_turn(player=True)
-        question = question.strip()
-        if not question:
-            raise GameError("Enter a question for the witness.")
+        question = bounded(question, QUESTION_LIMIT)
         context = tuple(
             f"{entry.speaker}: {entry.text}" for entry in self.record
             if entry.witness_id == turn.witness_id and entry.kind is not None
             and entry.status in (Status.SPOKEN, Status.ADMITTED, Status.LIMITED, Status.SHOWN)
         )[-6:]
+        demeanor = self.case.witnesses[turn.witness_id].demeanor
+        if demeanor:
+            context = (f"Witness demeanor: {demeanor}", *context)
         return QuestionRequest(
             question, MappingProxyType(self._eligible_statements()), context, self._question_stamp(),
         )
@@ -157,6 +159,25 @@ class Trial:
 
     def _question_stamp(self) -> tuple[object, int, int]:
         return self._question_owner, self._turn_index, len(self.record)
+
+    def offer_from_chat(self, message: str) -> bool:
+        message = bounded(message, QUESTION_LIMIT)
+        offer = re.fullmatch(r"(?:i\s+)?(?:offer|present|introduce|show)\s+(?:the\s+)?(.+)", message, re.I)
+        if offer is None:
+            return False
+        query = words(offer[1])
+        matches = [
+            key for key in self.exhibits
+            if query and (query == words(key) or mentions(words(self.case.exhibits[key].title), query))
+        ]
+        if len(matches) != 1:
+            raise GameError("Use the title of one exhibit from the case file, such as “Offer the closing inventory.”")
+        self.offer(matches[0])
+        return True
+
+    def advance_rival(self) -> None:
+        while self.turn is not None and not self.player_turn and self.pending is None:
+            self.rival_next()
 
     def offer(self, exhibit_id: str) -> None:
         turn = self._require_turn(player=True)
@@ -287,6 +308,8 @@ class Trial:
             self._append(self._counsel(), move.text, Status.SPOKEN, kind=Kind.QUESTION)
             statement = self._eligible_statements().get(move.statement_id)
             text = statement.text if statement is not None else "Could you ask about something I personally observed?"
+            if statement is not None and statement.delivery:
+                text = f"{statement.delivery} {text}"
             grounds = (Ground.HEARSAY,) if statement is not None and statement.notice_purpose else ()
             self._stage(Move(Kind.ANSWER, text, statement_id=move.statement_id, grounds=grounds), pending.notice_only)
         else:

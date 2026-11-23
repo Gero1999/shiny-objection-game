@@ -1,6 +1,6 @@
 # Case authoring
 
-Write each first-round case as one JSON file in `cases/`. A case should work
+Write each first-round case as one JSON file in `cases/`. Each side calls one witness. A case should work
 from either side. Complete the private facts and proof mappings before
 writing the questions so the logic stays consistent through a replay.
 
@@ -10,11 +10,12 @@ writing the questions so the logic stays consistent through a replay.
 | --- | --- |
 | Identity | Stable case ID, display title, format version, and the fictional jurisdiction. |
 | Opening | Police briefing, explicitly attributed statements, and exhibit IDs already disclosed. |
+| Client | Defendant name, greeting, and statements available in the defense consultation. A client's account can differ from the private truth and should suggest leads without admitting evidence. |
 | Charge | The legal elements as defined in this fictional jurisdiction, their required proof combinations, material contradictions, and possible resolutions. |
 | Private facts | What actually happened, the timeline, and plausible competing explanations. Give referenced claims stable IDs. |
 | Leads | Stable IDs, location or topic aliases, prerequisites, and the evidence or witness profiles each lead reveals. |
 | Exhibits | Display title, text, provenance, claims supported or challenged, and any foundation the case requires. |
-| Witnesses | Public profile, manner of speaking, private motivations, what they personally know, and allowed statements. For each conditional statement, record what allows the witness to say it. |
+| Witnesses | Public profile, demeanor, private motivations, what they personally know, and allowed statements. For each conditional statement, record what allows the witness to say it. |
 | Rival | Ordered witness choices and exhibits for each side, their disclosures, and the normal examination moves. Give occasional departures a specific objection ground and a normal alternative. |
 | Sentencing | Baseline sentence, minimum sentence, and mitigation factors linked to admissible proof. |
 
@@ -53,7 +54,7 @@ playable case needs a complete timeline, cast, and proof map.
 
 - Check that the briefing discloses only its listed exhibits and statements.
 - Walk all investigation paths that can reach the budget. Confirm the player
-  can choose two witnesses and the rival still has two distinct choices.
+  can choose one witness and the rival can call a different one.
 - Confirm every reveal, statement condition, exhibit, and proof combination
   refers to an existing case ID.
 - Play one route to a supported conviction and one to an acquittal. Confirm
