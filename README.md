@@ -27,6 +27,9 @@ an Ollama connection for dialogue.
 The game is in design. This repository contains the project context and
 planning documents. See [AGENTS.md](AGENTS.md) for the development guidelines.
 
+- [Game design](docs/game-design.md)
+- [Case authoring](docs/case-authoring.md)
+
 ## Contributing
 
 Open an issue for a gameplay idea or start a branch and submit a pull request.
