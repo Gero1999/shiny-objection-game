@@ -1,7 +1,7 @@
 # Game design
 
 Shiny Objection is a fictional criminal trial game. The player investigates a
-case, chooses two witnesses, and argues either for the prosecution or for the
+case, chooses a witness, and argues either for the prosecution or for the
 defense. A good round lets the player identify why they won or lost and what
 they would do differently on a replay.
 
@@ -12,7 +12,7 @@ they would do differently on a replay.
 | Connection | Enter a hosted model token or connect to Ollama. | Check the selected model before starting the round. |
 | Briefing | Read the opening police report and choose a side. | Randomly select an authored case and show only the opening disclosures. Attribute observations and allegations to their sources. |
 | Investigation | Describe what to search, inspect, or ask about. | Match the request to an authored lead. Reveal the linked evidence and witness profiles. |
-| Witness selection | Choose two distinct witnesses from the discovered profiles. | Lock the player's selection. Pick two other witnesses using the rival's role-specific order. |
+| Witness selection | Choose one witness from the discovered profiles. | Lock the player's selection and pick a different witness for the rival. |
 | Trial | Question witnesses, present exhibits, object, and reply to objections. | Alternate direct and cross-examination, rule on pending moves, and maintain the admitted record. |
 | Closing and verdict | Connect admitted testimony and exhibits to the elements of the charge. | Explain whether the evidence meets the fictional burden for each element. |
 | Sentencing | After a conviction, argue about the sentence. | Apply case-defined mitigation supported by the admitted record. |
@@ -31,12 +31,12 @@ available to reference. Admission determines what the jury can consider.
 
 ## Witness rounds
 
-The prosecution calls its two witnesses first, followed by the defense.
+The prosecution calls its witness first, followed by the defense.
 For each witness, the calling side conducts direct examination and the
 other side conducts cross-examination.
 
 - During their examination, the player can ask a question in plain language,
-  present an available exhibit, or end the examination.
+  offer an available exhibit in chat, or end the examination.
 - During the rival's examination, reveal one authored question or exhibit
   offer at a time. Pause for the player to pass or object before the witness
   answers or the exhibit takes effect.

@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import replace
 
 from shiny_objection.cases import Examination, Ground, Side, load_case
 from shiny_objection.game import Game, GameError
@@ -10,13 +11,18 @@ from test_cases import CASE_PATH
 _WITNESS_LEADS = {"mira": "keys", "ivo": "closing clock", "lio": "dry store", "sen": "permission"}
 
 
-def ready_game(side: Side, witnesses: tuple[str, str], seed: int = 1) -> Game:
-    game = Game(load_case(CASE_PATH), seed)
+def ready_game(side: Side, witnesses: tuple[str, ...], seed: int = 1, rival_first: str | None = None) -> Game:
+    case = load_case(CASE_PATH)
+    if rival_first:
+        priorities = dict(case.rival_witnesses)
+        priorities[side.other] = (rival_first, *(key for key in priorities[side.other] if key != rival_first))
+        case = replace(case, rival_witnesses=priorities)
+    game = Game(case, seed)
     game.choose_side(side)
     for witness in witnesses:
         game.investigate(_WITNESS_LEADS[witness])
     game.finish_investigation()
-    game.choose_witnesses(witnesses)
+    game.choose_witnesses(witnesses[:1])
     return game
 
 
@@ -31,7 +37,7 @@ def pass_rival_examination(trial: Trial) -> None:
 
 class TrialTests(unittest.TestCase):
     def test_sustained_leading_question_never_reaches_witness(self):
-        trial = Trial(ready_game(Side.DEFENSE, ("lio", "sen")))
+        trial = Trial(ready_game(Side.DEFENSE, ("lio", "sen"), rival_first="ivo"))
         trial.rival_next()
         self.assertEqual(trial.turn.examination, Examination.DIRECT)
         self.assertIn("You saw Neri", trial.pending.move.text)
@@ -91,9 +97,7 @@ class TrialTests(unittest.TestCase):
         self.assertNotIn("mira-heard", trial.admitted_ids)
 
     def test_player_can_strike_a_rival_answer_after_passing_on_the_question(self):
-        trial = Trial(ready_game(Side.DEFENSE, ("lio", "sen"), seed=0))
-        pass_rival_examination(trial)
-        trial.end_examination()
+        trial = Trial(ready_game(Side.DEFENSE, ("lio", "sen"), seed=0, rival_first="mira"))
         trial.rival_next()
         self.assertEqual(trial.turn.witness_id, "mira")
         trial.pass_rival_move()
@@ -132,3 +136,17 @@ class TrialTests(unittest.TestCase):
         self.assertNotIn("lio-confirmed-time", request.eligible)
         with self.assertRaisesRegex(GameError, "unavailable"):
             trial.apply_question(request, QuestionPlan("lio-confirmed-time"))
+
+    def test_chat_offer_and_automatic_rival_pause(self):
+        trial = Trial(ready_game(Side.PROSECUTION, ("lio", "sen")))
+        self.assertFalse(trial.offer_from_chat("What did the receipt say?"))
+        with self.assertRaisesRegex(GameError, "title"):
+            trial.offer_from_chat("Offer the nonexistent exhibit")
+        self.assertTrue(trial.offer_from_chat("I offer the closing inventory."))
+        self.assertIn("closing-inventory", trial.admitted_ids)
+        trial.end_examination()
+        trial.advance_rival()
+        self.assertIsNotNone(trial.pending)
+        pending = trial.pending
+        trial.advance_rival()
+        self.assertEqual(trial.pending, pending)

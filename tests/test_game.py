@@ -40,10 +40,10 @@ class GameTests(unittest.TestCase):
             self.game.choose_witnesses(("mira", "lio"))
         self.assertEqual(self.game.phase, Phase.WITNESS_SELECTION)
         self.assertNotIn("key-register", {item.id for item in self.game.view().exhibits})
-        self.game.choose_witnesses(("lio", "sen"))
+        self.game.choose_witnesses(("lio",))
         view = self.game.view()
-        self.assertEqual(view.player_lineup, ("lio", "sen"))
-        self.assertEqual(view.rival_lineup, ("mira", "ivo"))
+        self.assertEqual(view.player_lineup, ("lio",))
+        self.assertEqual(view.rival_lineup, ("sen",))
         self.assertIn("key-register", {item.id for item in view.exhibits})
 
     def test_sessions_do_not_share_discoveries(self):
