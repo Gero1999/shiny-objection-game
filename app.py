@@ -1,7 +1,6 @@
 """Shiny front end for the scripted first case."""
 
 import asyncio
-import base64
 import os
 import secrets
 from pathlib import Path
@@ -19,7 +18,6 @@ from shiny_objection.trial import QuestionRequest, Status, Trial
 
 ROOT = Path(__file__).resolve().parent
 CASES = tuple(load_case(path) for path in sorted((ROOT / "cases").glob("*.json")))
-LOGO = "data:image/png;base64," + base64.b64encode((ROOT / "icon.png").read_bytes()).decode()
 
 
 def briefing(view: PlayerView):
@@ -524,7 +522,7 @@ app = App(
     ui.page_fluid(
         ui.tags.link(rel="stylesheet", href="courtroom.css"),
         ui.tags.header(
-            ui.tags.img(src=LOGO, alt="", width="40", height="36"),
+            ui.tags.img(src="logo.svg", alt="", width="40", height="40"),
             ui.span("Shiny Objection", class_="wordmark"),
             ui.span(ui.output_text("active_mode", inline=True), class_="practice"),
             class_="masthead",
