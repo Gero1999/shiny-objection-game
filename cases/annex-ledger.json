@@ -155,6 +155,7 @@
       },
       "scripts": {
         "direct": [
+          {"text": "Offer the closing inventory.", "exhibit": "closing-inventory"},
           {"text": "Who wrote and signed the receipt?", "statement": "lio-receipt"},
           {"text": "Offer the dry store handoff receipt.", "exhibit": "handoff-receipt"},
           {"text": "What did you see at the handoff?", "statement": "lio-handoff"},
