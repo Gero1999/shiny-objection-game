@@ -43,6 +43,7 @@ class Statement:
     text: str
     topics: tuple[str, ...]
     requires_exhibits: tuple[str, ...]
+    notice_purpose: bool
 
 
 @dataclass(frozen=True)
@@ -134,6 +135,7 @@ def _parse(data: dict) -> CaseDefinition:
                 statement["text"],
                 tuple(statement["topics"]),
                 tuple(statement.get("requires_exhibits", [])),
+                statement.get("notice_purpose", False),
             )
             for statement_id, statement in item["statements"].items()
         }
