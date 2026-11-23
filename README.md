@@ -1,30 +1,31 @@
-# Shiny Objection
+<div align="center">
+  <img src="static/logo.svg" width="128" height="128" alt="Gold gavel inside a dark teal speech bubble">
+  <h1>Shiny Objection</h1>
+  <p><strong>Follow the evidence. Question the witnesses. Make your case.</strong></p>
+  <p>A fictional courtroom game built with Shiny for Python. Play as the prosecutor or the defense attorney and see what you can prove in court.</p>
+  <p><a href="#the-annex-ledger">The first case</a> · <a href="#run-the-game">Run the game</a> · <a href="#dialogue-modes">Dialogue modes</a> · <a href="#project-docs">Project docs</a></p>
+</div>
 
-<img src="icon.png" alt="Shiny Objection logo" width="100">
+## The Annex Ledger
 
-Shiny Objection is a fictional courtroom game designed for Shiny for Python.
-Play as the prosecutor or defense attorney, investigate leads, and use the
-evidence you find to question witnesses and argue your side of the case.
+A civic ledger is missing at closing. The shift record puts an archivist on
+duty, but the police report can’t say who moved it. A key cabinet, a hallway
+clock, and a dry-store receipt offer different ways into the case.
 
-## How a case plays
+| Stage | Your move |
+| --- | --- |
+| **Briefing** | Read the police report and choose prosecution or defense. |
+| **Investigation** | Describe a lead in your own words. Collect exhibits and choose two witnesses to call. |
+| **Trial** | Question your witnesses, cross-examine the rival’s, and offer exhibits. Object to improper moves and respond when opposing counsel objects. |
+| **Verdict** | Make a closing argument. The jury explains its verdict from the admitted record. If there’s a conviction, the court considers mitigation. |
 
-1. Receive a randomly selected case, read its opening police briefing, and
-   choose a side.
-2. Tell the game what you want to investigate. Review the evidence and
-   potential witnesses your leads uncover, then choose two witnesses.
-3. Examine your witnesses and cross-examine the other side's. Present
-   exhibits, object to improper questions or evidence, and respond when
-   opposing counsel objects.
-4. Make a closing argument. The jury explains its verdict using the trial
-   record. If there is a conviction, the court hears arguments on the sentence.
+> **Try a lead.** Enter “check the key cabinet,” then ask the clerk who kept
+> the register. Establishing its source gives you a foundation to offer it
+> as evidence.
 
-Each case has an authored set of facts, evidence, and character motivations.
-Players will be able to connect a hosted model using their own API token or use
-an Ollama connection for dialogue.
+## Run the game
 
-## Run the first case
-
-Use Python 3.11 or later.
+Requires Python 3.11 or later. From the repository root:
 
 ```bash
 python -m venv .venv
@@ -33,38 +34,32 @@ python -m pip install -r requirements.txt
 python -m shiny run app.py
 ```
 
-Follow the local URL shown by Shiny. In **The Annex Ledger**, try a lead such
-as “check the key cabinet,” then ask witnesses about the records they handle
-or what they saw.
+Open the local URL shown by Shiny and choose a dialogue mode. **Scripted
+practice** is the quickest way to play the full case.
 
-### Choose a dialogue mode
+## Dialogue modes
 
-- **Scripted practice** runs without a model or credentials. It matches
-  questions to authored testimony and is the quickest way to play.
-- **Ollama** sends questions to the Ollama server that the Shiny process can
-  reach. Start Ollama and use `ollama pull smollm2:135m` for a small connection
-  test, or enter the name of another installed model. The default server
-  URL is `http://127.0.0.1:11434`. Set `SHINY_OBJECTION_OLLAMA_URL` on the
-  Shiny server if Ollama runs elsewhere. [Ollama setup](https://github.com/ollama/ollama)
-- **OpenAI** accepts an API token and a model that supports structured
-  outputs. The default is `gpt-4.1-mini`. The game keeps the token for
-  the session, and model calls may use your API credits.
+| Mode | Setup |
+| --- | --- |
+| **Scripted practice** | Works without credentials. Matches questions to authored testimony. |
+| **Ollama** | Run Ollama and enter the name of an installed model. For a small connection test, pull `smollm2:135m`. The app defaults to `http://127.0.0.1:11434`. Use `SHINY_OBJECTION_OLLAMA_URL` on the Shiny server to configure another endpoint. [Ollama setup](https://github.com/ollama/ollama) |
+| **OpenAI** | Enter your API token and a model that supports structured outputs. The default is `gpt-4.1-mini`. The server holds the token for your session, and calls may use API credits. |
 
-Each model receives eligible witness statements and a short excerpt of the
-current witness's exchange. The game renders the selected authored response
-and applies rules and verdicts from its own state.
+Model modes use the active witness’s eligible statements and recent exchanges
+to select an authored answer. The game applies objection rules and decides the
+outcome from the trial record.
 
-Run the engine tests from the repository root with
-`python -m unittest discover -s tests -v`.
+## Project docs
 
-## Project documents
+- [Game design](docs/game-design.md) explains the player flow and rules of the fictional court.
+- [Case authoring](docs/case-authoring.md) covers how evidence, witnesses, and testimony fit together.
+- [Technical architecture](docs/architecture.md) describes the engine, Shiny session, and model adapters.
+- [Development guide](AGENTS.md) records the gameplay and testing conventions.
 
-See [AGENTS.md](AGENTS.md) for the development guidelines.
+Run the engine tests from the repository root.
 
-- [Game design](docs/game-design.md)
-- [Case authoring](docs/case-authoring.md)
-- [Technical architecture](docs/architecture.md)
-
-## Contributing
+```bash
+python -m unittest discover -s tests -v
+```
 
 Open an issue for a gameplay idea or start a branch and submit a pull request.
