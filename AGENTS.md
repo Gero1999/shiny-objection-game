@@ -4,6 +4,8 @@ Shiny Objection is a fictional courtroom game designed for Shiny for Python.
 Read [README.md](README.md) for the player flow and current project status.
 Use the [game design](docs/game-design.md) for phase and ruling behavior and
 the [case authoring guide](docs/case-authoring.md) when editing case content.
+Read the [technical architecture](docs/architecture.md) for module boundaries,
+session state, and the first implementation slice.
 
 ## Gameplay invariants
 
