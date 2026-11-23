@@ -43,7 +43,13 @@ practice** is the quickest way to play the full case.
 | --- | --- |
 | **Scripted practice** | Works without credentials. Matches questions to authored testimony. |
 | **Ollama** | Run Ollama and enter the name of an installed model. For a small connection test, pull `smollm2:135m`. The app defaults to `http://127.0.0.1:11434`. Use `SHINY_OBJECTION_OLLAMA_URL` on the Shiny server to configure another endpoint. [Ollama setup](https://github.com/ollama/ollama) |
-| **OpenAI** | Enter your API token and a model that supports structured outputs. The default is `gpt-4.1-mini`. The server holds the token for your session, and calls may use API credits. |
+| **OpenAI** | Enter your API token and a model that supports structured outputs. The default is the lower-cost `gpt-4.1-nano`. The server holds the token for your session, and calls may use API credits. |
+
+For a trusted local run, set `SHINY_OBJECTION_OPENAI_KEY` before starting
+Shiny if you prefer to keep the key out of the browser. Otherwise, the token field
+is available on localhost or over HTTPS. The password field masks the key on
+screen. Shiny receives a browser-entered key and uses it to authenticate to
+OpenAI, so use a server you trust.
 
 Model modes use the active witness’s eligible statements and recent exchanges
 to select an authored answer. The game applies objection rules and decides the

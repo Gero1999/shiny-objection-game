@@ -1,10 +1,25 @@
 """OpenAI Responses API adapter using a session-supplied token."""
 
+from ipaddress import ip_address
+
 from .model_http import post_json
 from .models import ModelError, StructuredDialogue
 
-DEFAULT_HOSTED_MODEL = "gpt-4.1-mini"
+DEFAULT_HOSTED_MODEL = "gpt-4.1-nano"
 _ENDPOINT = "https://api.openai.com/v1/responses"
+
+
+def is_local_connection(hostname: str | None, client: str | None) -> bool:
+    if hostname == "localhost":
+        hostname = "127.0.0.1"
+    try:
+        return ip_address(hostname).is_loopback and ip_address(client).is_loopback
+    except ValueError:
+        return False
+
+
+def accepts_browser_token(scheme: str, hostname: str | None, client: str | None) -> bool:
+    return scheme in ("https", "wss") or is_local_connection(hostname, client)
 
 
 class OpenAIDialogue(StructuredDialogue):
