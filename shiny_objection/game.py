@@ -5,10 +5,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from .cases import CaseDefinition, Side
-
-
-class GameError(ValueError):
-    """An action could not be applied in the current playthrough."""
+from .errors import GameError as GameError
 
 
 class Phase(StrEnum):

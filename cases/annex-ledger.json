@@ -1,5 +1,9 @@
 {
   "version": 1,
+  "rival_closings": {
+    "prosecution": "Follow the ledger from the empty shelf to the dry store and decide whether the record establishes who moved it and whether they had permission.",
+    "defense": "Being assigned the last shift does not establish who moved the ledger. Ask what each witness personally observed and what the exhibits actually establish."
+  },
   "id": "annex-ledger",
   "title": "The Annex Ledger",
   "jurisdiction": "Common Court of Bellmarsh",

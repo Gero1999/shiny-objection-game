@@ -101,7 +101,7 @@ and resolves any contradictions in that record that the case marks as
 material to an element. Otherwise acquit. Cite the exhibit numbers and
 testimony lines that mattered, including the missing proof on acquittal.
 
-Closing arguments let the player identify the relevant links between the
+The rival gives a short closing before the player's. Closing arguments let the player identify the relevant links between the
 record and their theory. An argument can call attention to evidence already
 in the record. The jury scores the supported links to the elements.
 

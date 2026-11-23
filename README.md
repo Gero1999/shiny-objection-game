@@ -23,6 +23,8 @@ clock, and a dry-store receipt offer different ways into the case.
 > the register. Establishing its source gives you a foundation to offer it
 > as evidence.
 
+The rival gives their closing first. Your reply can be up to 480 characters.
+
 ## Run the game
 
 Requires Python 3.11 or later. From the repository root:
