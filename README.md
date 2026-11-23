@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="static/logo.svg" width="128" height="128" alt="Gold gavel inside a dark teal speech bubble">
+  <img src="static/logo.svg" width="128" height="128" alt="Gold gavel with blue sparks inside a dark teal speech bubble">
   <h1>Shiny Objection</h1>
   <p><strong>Follow the evidence. Question the witnesses. Make your case.</strong></p>
   <p>A fictional courtroom game built with Shiny for Python. Play as the prosecutor or the defense attorney and see what you can prove in court.</p>

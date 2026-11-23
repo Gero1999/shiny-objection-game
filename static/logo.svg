@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title description">
   <title id="title">Shiny Objection</title>
-  <desc id="description">A gold gavel and strike marks inside a dark teal speech bubble.</desc>
+  <desc id="description">A gold gavel with blue sparks inside a dark teal speech bubble.</desc>
   <path fill="#102a37" stroke="#dba953" stroke-width="3.5" stroke-linejoin="round"
         d="M31 11h66c12.7 0 23 10.3 23 23v47c0 12.7-10.3 23-23 23H55l-27 16 4-16h-1c-12.7 0-23-10.3-23-23V34c0-12.7 10.3-23 23-23Z"/>
   <path fill="#174452" d="M31 20h66c7.7 0 14 6.3 14 14v47c0 7.7-6.3 14-14 14H31c-7.7 0-14-6.3-14-14V34c0-7.7 6.3-14 14-14Z"/>
@@ -12,6 +12,8 @@
     <rect x="77" y="37" width="9" height="27" rx="2.5" fill="#ffda8a"/>
     <path d="M54 45h20" stroke="#ffda8a" stroke-width="2" stroke-linecap="round"/>
   </g>
-  <path d="m30 69 5 4m8 1v7m8-12-3 5" fill="none" stroke="#ffda8a"
-        stroke-width="3" stroke-linecap="round"/>
+  <path fill="#89d2ff"
+        d="M39 66l1.9 6.1L47 74l-6.1 1.9L39 82l-1.9-6.1L31 74l6.1-1.9Z
+           M28 59l1.2 3.8L33 64l-3.8 1.2L28 69l-1.2-3.8L23 64l3.8-1.2Z
+           M52 73l1.1 3.4 3.4 1.1-3.4 1.1L52 82l-1.1-3.4-3.4-1.1 3.4-1.1Z"/>
 </svg>
