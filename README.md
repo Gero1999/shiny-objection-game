@@ -33,11 +33,26 @@ python -m pip install -r requirements.txt
 python -m shiny run app.py
 ```
 
-Follow the local URL shown by Shiny. **The Annex Ledger** runs in scripted
-practice mode. Try a lead such as “check the key cabinet,” then ask witnesses
-about the records they handle or what they saw. The practice mode matches
-questions to authored testimony. Hosted-model and Ollama connections are
-planned in the [technical architecture](docs/architecture.md).
+Follow the local URL shown by Shiny. In **The Annex Ledger**, try a lead such
+as “check the key cabinet,” then ask witnesses about the records they handle
+or what they saw.
+
+### Choose a dialogue mode
+
+- **Scripted practice** runs without a model or credentials. It matches
+  questions to authored testimony and is the quickest way to play.
+- **Ollama** sends questions to the Ollama server that the Shiny process can
+  reach. Start Ollama and use `ollama pull smollm2:135m` for a small connection
+  test, or enter the name of another installed model. The default server
+  URL is `http://127.0.0.1:11434`. Set `SHINY_OBJECTION_OLLAMA_URL` on the
+  Shiny server if Ollama runs elsewhere. [Ollama setup](https://github.com/ollama/ollama)
+- **OpenAI** accepts an API token and a model that supports structured
+  outputs. The default is `gpt-4.1-mini`. The game keeps the token for
+  the session, and model calls may use your API credits.
+
+Each model receives eligible witness statements and a short excerpt of the
+current witness's exchange. The game renders the selected authored response
+and applies rules and verdicts from its own state.
 
 Run the engine tests from the repository root with
 `python -m unittest discover -s tests -v`.

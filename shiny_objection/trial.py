@@ -2,12 +2,14 @@
 
 import random
 from collections import deque
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from enum import StrEnum
+from types import MappingProxyType
 
 from .cases import Examination, Ground, ScriptedMove, Side, Statement
 from .game import Game, GameError, Phase, mentions, words
-from .models import Dialogue, ScriptedDialogue
+from .models import Dialogue, QuestionPlan, ScriptedDialogue
 
 
 class Kind(StrEnum):
@@ -60,6 +62,16 @@ class RecordEntry:
     text: str
     status: Status
     proof_id: str | None = None
+    witness_id: str | None = None
+    kind: Kind | None = None
+
+
+@dataclass(frozen=True)
+class QuestionRequest:
+    question: str
+    eligible: Mapping[str, Statement]
+    context: tuple[str, ...]
+    stamp: tuple[object, int, int]
 
 
 _GROUND_REASONS = {
@@ -87,6 +99,7 @@ class Trial:
             for examination in Examination
         )
         self._turn_index = 0
+        self._question_owner = object()
         self.pending: Pending | None = None
         self.record: list[RecordEntry] = []
         self._shown: dict[str, set[str]] = {key: set() for key in self.case.witnesses}
@@ -115,15 +128,35 @@ class Trial:
         )
 
     def ask(self, question: str) -> None:
-        self._require_turn(player=True)
+        request = self.prepare_question(question)
+        self.apply_question(request, self.dialogue.interpret(
+            request.question, request.eligible, request.context,
+        ))
+
+    def prepare_question(self, question: str) -> QuestionRequest:
+        turn = self._require_turn(player=True)
         question = question.strip()
         if not question:
             raise GameError("Enter a question for the witness.")
-        eligible = self._eligible_statements()
-        plan = self.dialogue.interpret(question, eligible)
-        if plan.statement_id is not None and plan.statement_id not in eligible:
+        context = tuple(
+            f"{entry.speaker}: {entry.text}" for entry in self.record
+            if entry.witness_id == turn.witness_id and entry.kind is not None
+            and entry.status in (Status.SPOKEN, Status.ADMITTED, Status.LIMITED, Status.SHOWN)
+        )[-6:]
+        return QuestionRequest(
+            question, MappingProxyType(self._eligible_statements()), context, self._question_stamp(),
+        )
+
+    def apply_question(self, request: QuestionRequest, plan: QuestionPlan) -> None:
+        if request.stamp != self._question_stamp():
+            raise GameError("That model response belongs to an earlier move.")
+        self._require_turn(player=True)
+        if plan.statement_id is not None and plan.statement_id not in self._eligible_statements():
             raise GameError("That response is unavailable for this witness. Rephrase the question.")
-        self._stage(Move(Kind.QUESTION, question, statement_id=plan.statement_id, grounds=plan.grounds))
+        self._stage(Move(Kind.QUESTION, request.question, statement_id=plan.statement_id, grounds=plan.grounds))
+
+    def _question_stamp(self) -> tuple[object, int, int]:
+        return self._question_owner, self._turn_index, len(self.record)
 
     def offer(self, exhibit_id: str) -> None:
         turn = self._require_turn(player=True)
@@ -249,16 +282,16 @@ class Trial:
             exhibit = self.case.exhibits[move.exhibit_id]
             status = Status.SHOWN if move.exhibit_id in self.admitted_ids else Status.ADMITTED
             self._shown[turn.witness_id].add(move.exhibit_id)
-            self._append(self._counsel(), exhibit.title, status, move.exhibit_id)
+            self._append(self._counsel(), exhibit.title, status, move.exhibit_id, kind=Kind.EXHIBIT)
         elif move.kind == Kind.QUESTION:
-            self._append(self._counsel(), move.text, Status.SPOKEN)
+            self._append(self._counsel(), move.text, Status.SPOKEN, kind=Kind.QUESTION)
             statement = self._eligible_statements().get(move.statement_id)
             text = statement.text if statement is not None else "Could you ask about something I personally observed?"
             grounds = (Ground.HEARSAY,) if statement is not None and statement.notice_purpose else ()
             self._stage(Move(Kind.ANSWER, text, statement_id=move.statement_id, grounds=grounds), pending.notice_only)
         else:
             status = Status.LIMITED if pending.notice_only else Status.ADMITTED
-            self._append(self._witness_name(), move.text, status, move.statement_id)
+            self._append(self._witness_name(), move.text, status, move.statement_id, kind=Kind.ANSWER)
 
     def _prepare_turn(self) -> None:
         self._queue.clear()
@@ -294,5 +327,11 @@ class Trial:
         assert self.turn is not None
         return self.case.witnesses[self.turn.witness_id].name
 
-    def _append(self, speaker: str, text: str, status: Status, proof_id: str | None = None) -> None:
-        self.record.append(RecordEntry(len(self.record) + 1, speaker, text, status, proof_id))
+    def _append(
+        self, speaker: str, text: str, status: Status, proof_id: str | None = None,
+        *, kind: Kind | None = None,
+    ) -> None:
+        witness_id = self.turn.witness_id if self.turn else None
+        self.record.append(RecordEntry(
+            len(self.record) + 1, speaker, text, status, proof_id, witness_id, kind,
+        ))

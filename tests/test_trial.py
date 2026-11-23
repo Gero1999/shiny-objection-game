@@ -2,6 +2,7 @@ import unittest
 
 from shiny_objection.cases import Examination, Ground, Side, load_case
 from shiny_objection.game import Game, GameError
+from shiny_objection.models import QuestionPlan
 from shiny_objection.trial import Kind, Status, Trial
 from test_cases import CASE_PATH
 
@@ -108,3 +109,26 @@ class TrialTests(unittest.TestCase):
         trial.reply()
         trial.ask("Is music your favorite hobby?")
         self.assertEqual(trial.pending.objection, Ground.RELEVANCE)
+
+    def test_snapshot_rejects_duplicate_and_other_trial_responses(self):
+        trial = Trial(ready_game(Side.PROSECUTION, ("lio", "sen")))
+        other = Trial(ready_game(Side.PROSECUTION, ("lio", "sen")))
+        request = trial.prepare_question("Who wrote the receipt?")
+        plan = QuestionPlan("lio-receipt")
+        with self.assertRaisesRegex(GameError, "earlier move"):
+            other.apply_question(request, plan)
+        trial.apply_question(request, plan)
+        with self.assertRaisesRegex(GameError, "earlier move"):
+            trial.apply_question(request, plan)
+        self.assertEqual([entry.proof_id for entry in trial.record].count("lio-receipt"), 1)
+        self.assertEqual(other.record, [])
+
+    def test_model_context_carries_public_followup_but_excludes_locked_answer(self):
+        trial = Trial(ready_game(Side.PROSECUTION, ("lio", "sen")))
+        trial.ask("Who wrote the receipt?")
+        request = trial.prepare_question("What time was that?")
+        self.assertIn("You: Who wrote the receipt?", request.context)
+        self.assertIn("watched Neri sign it", request.context[-1])
+        self.assertNotIn("lio-confirmed-time", request.eligible)
+        with self.assertRaisesRegex(GameError, "unavailable"):
+            trial.apply_question(request, QuestionPlan("lio-confirmed-time"))

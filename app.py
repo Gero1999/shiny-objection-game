@@ -1,6 +1,8 @@
 """Shiny front end for the scripted first case."""
 
+import asyncio
 import base64
+import os
 import secrets
 from pathlib import Path
 
@@ -8,8 +10,11 @@ from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 
 from shiny_objection.cases import Ground, Side, load_case, select_case
 from shiny_objection.game import Game, GameError, Phase, PlayerView
+from shiny_objection.hosted_model import DEFAULT_HOSTED_MODEL, OpenAIDialogue
+from shiny_objection.models import Dialogue, ModelError, ScriptedDialogue, verify_connection
+from shiny_objection.ollama import DEFAULT_OLLAMA_MODEL, DEFAULT_OLLAMA_URL, OllamaDialogue
 from shiny_objection.outcome import SentenceResult, Verdict, deliberate, sentence
-from shiny_objection.trial import Status, Trial
+from shiny_objection.trial import QuestionRequest, Status, Trial
 
 
 ROOT = Path(__file__).resolve().parent
@@ -61,7 +66,7 @@ def choose_witnesses(view: PlayerView):
     )
 
 
-def courtroom(view: PlayerView, trial: Trial):
+def courtroom(view: PlayerView, trial: Trial, waiting: bool, draft_question: str):
     turn = trial.turn
     assert turn is not None
     witness = next(person for person in view.witnesses if person.id == turn.witness_id)
@@ -71,11 +76,12 @@ def courtroom(view: PlayerView, trial: Trial):
             class_="status-line",
         ),
         ui.h2(witness.name),
-        courtroom_controls(view, trial),
+        ui.p("Waiting for the witness model…", role="status")
+        if waiting else courtroom_controls(view, trial, draft_question),
     )
 
 
-def courtroom_controls(view: PlayerView, trial: Trial):
+def courtroom_controls(view: PlayerView, trial: Trial, draft_question: str):
     pending = trial.pending
     if pending is not None:
         move = ui.div(
@@ -117,7 +123,7 @@ def courtroom_controls(view: PlayerView, trial: Trial):
 
     exhibits = {"": "Choose an exhibit", **{item.id: item.title for item in view.exhibits}}
     return ui.div(
-        ui.input_text_area("question", "Question for the witness", width="100%", rows=2),
+        ui.input_text_area("question", "Question for the witness", value=draft_question, width="100%", rows=2),
         ui.input_action_button("ask", "Ask question", class_="btn-primary"),
         ui.div(
             ui.input_select("exhibit", "Exhibit", exhibits, width="100%"),
@@ -254,6 +260,40 @@ def new_game() -> Game:
     return Game(select_case(CASES, seed), seed)
 
 
+def notice_view(status):
+    if status is None:
+        return None
+    message, failed = status
+    return ui.p(message, class_="notice error" if failed else "notice", role="alert" if failed else "status")
+
+
+def connection_screen(mode: str, models: dict[str, str], waiting: bool, status):
+    return ui.div(
+        ui.h1("Choose how to play"),
+        notice_view(status),
+        ui.p("Checking the selected model…", role="status") if waiting else ui.div(
+            ui.input_radio_buttons(
+                "model_mode", "Witness dialogue",
+                {"practice": "Scripted practice", "ollama": "Ollama", "openai": "OpenAI"},
+                selected=mode,
+            ),
+            ui.panel_conditional(
+                "input.model_mode === 'ollama'",
+                ui.input_text("ollama_model", "Installed Ollama model", value=models["ollama"]),
+                ui.p("Uses the Ollama server configured for this Shiny app."),
+            ),
+            ui.panel_conditional(
+                "input.model_mode === 'openai'",
+                ui.input_text("openai_model", "OpenAI model", value=models["openai"]),
+                ui.input_password("api_token", "OpenAI API token"),
+                ui.p("The server keeps your token for this session. Model calls may use your API credits."),
+            ),
+            ui.input_action_button("connect_model", "Continue to case", class_="btn-primary"),
+        ),
+        class_="panel model-setup",
+    )
+
+
 def server(input: Inputs, output: Outputs, session: Session):
     game = new_game()
     trial: Trial | None = None
@@ -261,11 +301,57 @@ def server(input: Inputs, output: Outputs, session: Session):
     sentence_result: SentenceResult | None = None
     revision = reactive.Value(0)
     notice = reactive.Value(None)
+    dialogue: Dialogue | None = None
+    active_label = "Model setup"
+    mode = "practice"
+    models = {"ollama": DEFAULT_OLLAMA_MODEL, "openai": DEFAULT_HOSTED_MODEL}
+    in_flight: int | None = None
+    sequence = 0
+    pending_connection: tuple[Dialogue, str] | None = None
+    pending_question: tuple[Trial, QuestionRequest] | None = None
+    draft_question = ""
+
+    @reactive.extended_task
+    async def model_call(ticket, work):
+        try:
+            return ticket, await asyncio.to_thread(work), None
+        except ModelError as error:
+            return ticket, None, str(error)
+
+    def submit(work):
+        nonlocal sequence, in_flight
+        sequence += 1
+        in_flight = sequence
+        model_call.invoke(sequence, work)
+
+    @reactive.effect
+    @reactive.event(model_call.result)
+    def model_finished():
+        nonlocal in_flight, pending_connection, pending_question, dialogue, active_label, draft_question
+        ticket, result, error = model_call.result()
+        if ticket != in_flight:
+            return
+        connecting, asking = pending_connection, pending_question
+        pending_connection, pending_question, in_flight = None, None, None
+        if error:
+            notice.set((error, True))
+        elif connecting:
+            dialogue, active_label = connecting
+        elif asking and trial is asking[0]:
+            try:
+                trial.apply_question(asking[1], result)
+            except GameError as rejected:
+                notice.set((str(rejected), True))
+            else:
+                draft_question = ""
+        revision.set(revision.get() + 1)
 
     def bind(button, action):
         @reactive.effect
         @reactive.event(input[button])
         def on_action():
+            if in_flight is not None:
+                return
             try:
                 message = action()
             except GameError as error:
@@ -274,18 +360,64 @@ def server(input: Inputs, output: Outputs, session: Session):
                 notice.set((message, False) if message else None)
             revision.set(revision.get() + 1)
 
+    def connect_model():
+        nonlocal dialogue, active_label, mode, pending_connection
+        if dialogue is not None:
+            return
+        mode = input.model_mode()
+        if mode == "practice":
+            dialogue, active_label = ScriptedDialogue(), "Scripted practice"
+            return
+        if mode == "ollama":
+            models[mode] = (input.ollama_model() or "").strip()
+            adapter = OllamaDialogue(
+                models[mode], os.environ.get("SHINY_OBJECTION_OLLAMA_URL", DEFAULT_OLLAMA_URL),
+            )
+            label = f"Ollama · {adapter.model}"
+        elif mode == "openai":
+            models[mode] = (input.openai_model() or "").strip()
+            token = input.api_token() or ""
+            ui.update_text("api_token", value="", session=session)
+            adapter = OpenAIDialogue(token, models[mode])
+            label = f"OpenAI · {adapter.model}"
+        else:
+            raise GameError("Choose a supported dialogue mode.")
+        pending_connection = adapter, label
+        submit(lambda: verify_connection(adapter))
+
+    def change_model():
+        nonlocal dialogue, active_label
+        if game.phase != Phase.BRIEFING:
+            raise GameError("Change the model from the police briefing before choosing a side.")
+        dialogue, active_label = None, "Model setup"
+
     def investigate():
         return f"Investigated {game.investigate(input.lead() or '')}."
 
     def start_trial():
         nonlocal trial
+        if dialogue is None:
+            raise GameError("Choose a dialogue mode before starting the trial.")
         game.choose_witnesses(tuple(input.witnesses() or ()))
-        trial = Trial(game)
+        trial = Trial(game, dialogue)
 
     def require_trial() -> Trial:
         if trial is None:
             raise GameError("Start the trial first.")
         return trial
+
+    def ask():
+        nonlocal pending_question, draft_question
+        active = require_trial()
+        draft_question = input.question() or ""
+        if mode == "practice":
+            active.ask(draft_question)
+            draft_question = ""
+            return
+        request = active.prepare_question(draft_question)
+        pending_question = active, request
+        adapter = active.dialogue
+        submit(lambda: adapter.interpret(request.question, request.eligible, request.context))
 
     def hear_verdict():
         nonlocal verdict
@@ -309,15 +441,25 @@ def server(input: Inputs, output: Outputs, session: Session):
         sentence_result = sentence(verdict, requested)
 
     def restart():
-        nonlocal game, trial, verdict, sentence_result
+        nonlocal game, trial, verdict, sentence_result, draft_question
         game, trial, verdict, sentence_result = new_game(), None, None, None
+        draft_question = ""
 
+    def clear_model():
+        nonlocal dialogue, trial, pending_connection, pending_question, in_flight
+        model_call.cancel()
+        dialogue, trial, pending_connection, pending_question, in_flight = None, None, None, None, None
+
+    session.on_ended(clear_model)
+
+    bind("connect_model", connect_model)
+    bind("change_model", change_model)
     bind("prosecution", lambda: game.choose_side(Side.PROSECUTION))
     bind("defense", lambda: game.choose_side(Side.DEFENSE))
     bind("investigate", investigate)
     bind("finish_investigation", lambda: game.finish_investigation())
     bind("start_trial", start_trial)
-    bind("ask", lambda: require_trial().ask(input.question() or ""))
+    bind("ask", ask)
     bind("offer", lambda: require_trial().offer(input.exhibit() or ""))
     bind("end_exam", lambda: require_trial().end_examination())
     bind("rival_next", lambda: require_trial().rival_next())
@@ -328,22 +470,32 @@ def server(input: Inputs, output: Outputs, session: Session):
     bind("sentence", hear_sentence)
     bind("restart", restart)
 
+    @render.text
+    def active_mode():
+        revision.get()
+        return active_label
+
     @render.ui
     def play():
         revision.get()
+        status = notice.get()
+        if dialogue is None:
+            return connection_screen(mode, models, in_flight is not None, status)
         view = game.view()
         if verdict is not None and trial is not None:
             pane = verdict_view(trial, verdict, sentence_result)
         elif trial is not None:
-            pane = courtroom(view, trial) if trial.turn else closing(trial)
+            pane = courtroom(view, trial, in_flight is not None, draft_question) if trial.turn else closing(trial)
         elif view.phase == Phase.WITNESS_SELECTION:
             pane = choose_witnesses(view)
         elif view.phase == Phase.INVESTIGATION:
             pane = investigation(view)
         else:
-            pane = briefing(view)
+            pane = ui.div(
+                briefing(view),
+                ui.input_action_button("change_model", "Change dialogue mode", class_="btn-outline-primary"),
+            )
 
-        status = notice.get()
         return ui.div(
             ui.div(
                 ui.p(view.jurisdiction, class_="status-line"),
@@ -355,10 +507,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             ui.div(
                 ui.div(
                     ui.tags.section(
-                        ui.p(
-                            status[0], class_="notice error" if status[1] else "notice",
-                            role="alert" if status[1] else "status",
-                        ) if status else None,
+                        notice_view(status),
                         pane,
                         class_="panel stage",
                     ),
@@ -377,7 +526,7 @@ app = App(
         ui.tags.header(
             ui.tags.img(src=LOGO, alt="", width="40", height="36"),
             ui.span("Shiny Objection", class_="wordmark"),
-            ui.span("Scripted practice", class_="practice"),
+            ui.span(ui.output_text("active_mode", inline=True), class_="practice"),
             class_="masthead",
         ),
         ui.tags.main(ui.output_ui("play"), class_="room"),
