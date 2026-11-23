@@ -1,0 +1,238 @@
+{
+  "version": 1,
+  "id": "annex-ledger",
+  "title": "The Annex Ledger",
+  "jurisdiction": "Common Court of Bellmarsh",
+  "charge": "Knowingly removing a civic record without authorization",
+  "briefing": "Police found the North Annex ledger missing from its assigned shelf at the closing count. Archivist Neri Vale was assigned the last shift. Nobody in the opening report claims to have seen the ledger leave.",
+  "private_truth": "Neri took the ledger off its shelf before the closing count and delivered it to the dry store to protect it from a leak. Neri told the courier where it was going and signed the 19:08 handoff receipt. There was no recorded authorization for the move. The clerk also lent out the spare key that evening, giving someone else access to the room.",
+  "opening_exhibits": ["closing-inventory"],
+  "lead_budget": 3,
+  "leads": {
+    "key-cabinet": {
+      "label": "Key cabinet",
+      "aliases": ["key", "keys", "key cabinet", "lock", "access", "sign out"],
+      "exhibits": ["key-register"],
+      "witnesses": ["mira"]
+    },
+    "dry-store": {
+      "label": "Dry store",
+      "aliases": ["dry store", "storage", "trolley", "handoff", "courier", "delivery"],
+      "exhibits": ["recovery-note", "handoff-receipt"],
+      "witnesses": ["lio"]
+    },
+    "closing-round": {
+      "label": "Closing round",
+      "aliases": ["closing", "clock", "caretaker", "hallway", "night shift"],
+      "exhibits": ["clock-photo"],
+      "witnesses": ["ivo"]
+    },
+    "transfer-desk": {
+      "label": "Transfer desk",
+      "aliases": ["transfer desk", "permission", "authorization", "supervisor", "maintenance", "leak"],
+      "exhibits": ["transfer-register", "maintenance-log"],
+      "witnesses": ["sen"]
+    }
+  },
+  "exhibits": {
+    "closing-inventory": {
+      "title": "Closing inventory",
+      "text": "The assigned ledger shelf was empty at the 19:00 closing count. Neri Vale was assigned the last shift."
+    },
+    "key-register": {
+      "title": "Spare key register",
+      "text": "The spare key was issued at 18:40. The return time is recorded as 18:55.",
+      "foundation": ["mira-register"]
+    },
+    "recovery-note": {
+      "title": "Dry store recovery note",
+      "text": "Police recovered the intact annex ledger from the dry store the following morning."
+    },
+    "handoff-receipt": {
+      "title": "Dry store handoff receipt",
+      "text": "A ledger handoff at 19:08 is signed Neri Vale. The destination is the dry store.",
+      "foundation": ["lio-receipt"]
+    },
+    "clock-photo": {
+      "title": "Hallway clock photograph",
+      "text": "The closing-round photograph shows the hallway clock at 19:05 and a trolley by the annex door."
+    },
+    "transfer-register": {
+      "title": "Authorized transfers register",
+      "text": "The annex requires a signed entry for moving an official record. There is no ledger transfer entry for the date in question.",
+      "foundation": ["sen-register"]
+    },
+    "maintenance-log": {
+      "title": "Maintenance call log",
+      "text": "A leaking pipe above the ledger shelves was reported at 18:42. The maintenance team was due the next morning.",
+      "foundation": ["sen-leak"]
+    }
+  },
+  "witnesses": {
+    "mira": {
+      "name": "Mira Senn",
+      "profile": "The key clerk keeps the spare key register.",
+      "motive": "Wants the register taken seriously and worries that the spare-key handoff will look careless.",
+      "statements": {
+        "mira-register": {
+          "text": "I kept the spare key register and wrote the entries myself.",
+          "topics": ["register", "wrote", "records", "foundation"]
+        },
+        "mira-return": {
+          "text": "The spare key was back at 18:55. I saw Neri head for the stairs a few minutes later and assumed Neri had left.",
+          "topics": ["return", "key", "access", "time"]
+        },
+        "mira-heard": {
+          "text": "A clerk told me Neri had permission. That is why I did not call the supervisor.",
+          "topics": ["heard", "told", "call", "notice"]
+        }
+      },
+      "scripts": {
+        "direct": [
+          {"text": "Who kept the spare key register?", "statement": "mira-register"},
+          {"text": "Offer the spare key register.", "exhibit": "key-register"},
+          {"text": "When did the spare key come back?", "statement": "mira-return"}
+        ],
+        "cross": [
+          {"text": "You did not watch the annex door after that, did you?", "statement": "mira-return", "grounds": ["Leading"]}
+        ]
+      },
+      "departures": {
+        "direct": {"text": "What did another clerk tell you about Neri having permission?", "statement": "mira-heard", "grounds": ["Hearsay"]}
+      }
+    },
+    "ivo": {
+      "name": "Ivo Ren",
+      "profile": "The caretaker passed the annex during closing.",
+      "motive": "Wants to help, but is reluctant to admit how little they saw in the hallway.",
+      "statements": {
+        "ivo-coat": {
+          "text": "I saw a pale coat and heard a trolley. I could not see the person's face.",
+          "topics": ["coat", "face", "saw", "hallway", "person"]
+        },
+        "ivo-clock": {
+          "text": "I took the hallway photograph on my closing round.",
+          "topics": ["clock", "photograph", "round", "time"]
+        }
+      },
+      "scripts": {
+        "direct": [
+          {"text": "What did you see near the annex?", "statement": "ivo-coat"},
+          {"text": "Offer the hallway clock photograph.", "exhibit": "clock-photo"}
+        ],
+        "cross": [
+          {"text": "You couldn't see the person's face, could you?", "statement": "ivo-coat", "grounds": ["Leading"]}
+        ]
+      },
+      "departures": {
+        "direct": {"text": "You saw Neri take the ledger, didn't you?", "statement": "ivo-coat", "grounds": ["Leading", "Speculation"]},
+        "cross": {"text": "What is your favorite color for a winter coat?", "grounds": ["Relevance"]}
+      }
+    },
+    "lio": {
+      "name": "Lio Fen",
+      "profile": "The courier works at the dry store receiving desk.",
+      "motive": "Protects the accuracy of their receipts even when pressed about events outside the receiving desk.",
+      "statements": {
+        "lio-receipt": {
+          "text": "I filled in the dry store receipt and watched Neri sign it.",
+          "topics": ["receipt", "signed", "signature", "wrote", "foundation"]
+        },
+        "lio-handoff": {
+          "text": "I saw Neri bring the annex ledger to the dry store. Neri said it was being put there for the night.",
+          "topics": ["handoff", "bring", "ledger", "saw", "moved"]
+        },
+        "lio-confirmed-time": {
+          "text": "Looking at my receipt, Neri personally handed me the ledger at 19:08. The dry store desk is on the stair landing.",
+          "topics": ["time", "when", "19:08", "confirmed"],
+          "requires_exhibits": ["handoff-receipt"]
+        },
+        "lio-unsure": {
+          "text": "I was at the receiving desk. I never saw who opened the annex door.",
+          "topics": ["door", "opened", "key"]
+        }
+      },
+      "scripts": {
+        "direct": [
+          {"text": "Who wrote and signed the receipt?", "statement": "lio-receipt"},
+          {"text": "Offer the dry store handoff receipt.", "exhibit": "handoff-receipt"},
+          {"text": "What did you see at the handoff?", "statement": "lio-handoff"},
+          {"text": "When did the handoff take place?", "statement": "lio-confirmed-time"},
+          {"text": "Offer the police recovery note.", "exhibit": "recovery-note"}
+        ],
+        "cross": [
+          {"text": "You never saw who opened the annex door, did you?", "statement": "lio-unsure", "grounds": ["Leading"]}
+        ]
+      },
+      "departures": {
+        "direct": {"text": "Why do you think Neri wanted to mislead the supervisor?", "statement": "lio-unsure", "grounds": ["Speculation"]}
+      }
+    },
+    "sen": {
+      "name": "Sen Tal",
+      "profile": "The annex supervisor signs official transfer approvals.",
+      "motive": "Wants the transfer rules respected but also wants the jury to know how long the leak went unaddressed.",
+      "statements": {
+        "sen-register": {
+          "text": "I checked our signed transfer register myself. There was no approved ledger move that evening.",
+          "topics": ["register", "transfer", "permission", "authorized", "approval", "foundation"]
+        },
+        "sen-leak": {
+          "text": "I called maintenance at 18:42 about the pipe above the ledger shelves. I recorded the call myself.",
+          "topics": ["maintenance", "leak", "pipe", "water", "call"]
+        }
+      },
+      "scripts": {
+        "direct": [
+          {"text": "What did the transfer register show?", "statement": "sen-register"},
+          {"text": "Offer the authorized transfers register.", "exhibit": "transfer-register"},
+          {"text": "What happened with the pipe?", "statement": "sen-leak"},
+          {"text": "Offer the maintenance call log.", "exhibit": "maintenance-log"}
+        ],
+        "cross": [
+          {"text": "There was a leak above the shelves, correct?", "statement": "sen-leak", "grounds": ["Leading"]}
+        ]
+      },
+      "departures": {
+        "direct": {"text": "Offer the transfers register before asking the witness about it.", "exhibit": "transfer-register"}
+      }
+    }
+  },
+  "rival": {
+    "prosecution": {
+      "witnesses": ["lio", "sen", "ivo", "mira"],
+      "exhibits": ["recovery-note", "handoff-receipt", "transfer-register"]
+    },
+    "defense": {
+      "witnesses": ["mira", "ivo", "sen", "lio"],
+      "exhibits": ["key-register", "clock-photo", "maintenance-log"]
+    }
+  },
+  "elements": [
+    {
+      "label": "The ledger was removed from its assigned location",
+      "alternatives": [["closing-inventory", "recovery-note"]]
+    },
+    {
+      "label": "Neri knowingly moved the ledger",
+      "alternatives": [["handoff-receipt", "lio-handoff"]],
+      "contradictions": {"mira-return": ["lio-confirmed-time"]}
+    },
+    {
+      "label": "The move lacked authorization",
+      "alternatives": [["transfer-register", "sen-register"]]
+    }
+  ],
+  "sentence": {
+    "baseline": 8,
+    "minimum": 2,
+    "unit": "months of civic supervision",
+    "factors": [
+      {
+        "label": "Protecting the ledger from a documented leak",
+        "requires": ["maintenance-log", "sen-leak"],
+        "reduction": 3
+      }
+    ]
+  }
+}
