@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol
 
-from .cases import Ground, Statement
+from .cases import Ground, Lead, Statement
 from .game import GameError, mentions, words
 
 
@@ -106,6 +106,32 @@ class StructuredDialogue:
         except (ValueError, TypeError):
             raise ModelError("The model returned an invalid witness plan. Try again.") from None
         return QuestionPlan(statement_id, tuple(dict.fromkeys(grounds)))
+
+    def find_lead(self, request: str, leads: Mapping[str, Lead]) -> str | None:
+        schema = {
+            "type": "object",
+            "properties": {"lead_id": {"type": ["string", "null"], "enum": [None, *leads]}},
+            "required": ["lead_id"],
+            "additionalProperties": False,
+        }
+        data = json.dumps({
+            "request": request,
+            "options": [{"id": key, "label": lead.label, "aliases": lead.aliases} for key, lead in leads.items()],
+        })
+        response = self.complete(
+            "Map the investigation request to one authored lead. Return null for ambiguous or unmatched requests.",
+            data, schema,
+        )
+        try:
+            plan = json.loads(response)
+            if not isinstance(plan, dict) or plan.keys() != {"lead_id"}:
+                raise ValueError
+            lead_id = plan["lead_id"]
+            if lead_id is not None and (not isinstance(lead_id, str) or lead_id not in leads):
+                raise ValueError
+        except (TypeError, ValueError):
+            raise ModelError("The model returned an invalid investigation result. Try again.") from None
+        return lead_id
 
     def complete(self, instruction: str, data: str, schema: dict) -> str:
         raise NotImplementedError

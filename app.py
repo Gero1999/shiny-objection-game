@@ -1,5 +1,7 @@
 """Shiny front end for the scripted first case."""
 
+from shiny_objection.models import StructuredDialogue
+
 import asyncio
 import os
 import secrets
@@ -7,13 +9,14 @@ from pathlib import Path
 
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 
+from shiny_objection import chat, ui_chat
 from shiny_objection.cases import Ground, Side, load_case, select_case
 from shiny_objection.game import Game, GameError, Phase, PlayerView
 from shiny_objection.hosted_model import DEFAULT_HOSTED_MODEL, OpenAIDialogue
 from shiny_objection.models import Dialogue, ModelError, ScriptedDialogue, verify_connection
 from shiny_objection.ollama import DEFAULT_OLLAMA_MODEL, DEFAULT_OLLAMA_URL, OllamaDialogue
 from shiny_objection.outcome import SentenceResult, Verdict, deliberate, sentence
-from shiny_objection.trial import QuestionRequest, Status, Trial
+from shiny_objection.trial import Status, Trial
 
 
 ROOT = Path(__file__).resolve().parent
@@ -39,14 +42,18 @@ def briefing(view: PlayerView):
     )
 
 
-def investigation(view: PlayerView):
+def investigation(view: PlayerView, game: Game, waiting: bool):
     return ui.div(
         ui.h2("Investigation"),
         ui.p(f"Remaining investigation leads · {view.investigations_left}", class_="status-line"),
         ui.p("Find at least two witnesses. Describe one place, record, or person to investigate."),
-        ui.input_text("lead", "Lead to investigate", placeholder="Check the key cabinet", width="100%"),
+        ui_chat.log(game.lead_chat, "Investigation"),
+        ui.p("Checking the lead…", role="status") if waiting else ui_chat.input_area(
+            "lead", f"Lead · {chat.LEAD_LIMIT} characters", chat.LEAD_LIMIT,
+            placeholder="Check the key cabinet", rows=2,
+        ),
         ui.div(
-            ui.input_action_button("investigate", "Investigate", class_="btn-primary"),
+            ui.input_action_button("investigate", "Send", class_="btn-primary", disabled=waiting),
             ui.input_action_button("finish_investigation", "Choose witnesses", class_="btn-outline-primary"),
             class_="actions",
         ),
@@ -305,8 +312,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     models = {"ollama": DEFAULT_OLLAMA_MODEL, "openai": DEFAULT_HOSTED_MODEL}
     in_flight: int | None = None
     sequence = 0
-    pending_connection: tuple[Dialogue, str] | None = None
-    pending_question: tuple[Trial, QuestionRequest] | None = None
+    complete_model = None
     draft_question = ""
 
     @reactive.extended_task
@@ -316,8 +322,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         except ModelError as error:
             return ticket, None, str(error)
 
-    def submit(work):
-        nonlocal sequence, in_flight
+    def submit(work, apply):
+        nonlocal sequence, in_flight, complete_model
+        complete_model = apply
         sequence += 1
         in_flight = sequence
         model_call.invoke(sequence, work)
@@ -325,23 +332,18 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(model_call.result)
     def model_finished():
-        nonlocal in_flight, pending_connection, pending_question, dialogue, active_label, draft_question
+        nonlocal in_flight, complete_model
         ticket, result, error = model_call.result()
         if ticket != in_flight:
             return
-        connecting, asking = pending_connection, pending_question
-        pending_connection, pending_question, in_flight = None, None, None
+        apply, complete_model, in_flight = complete_model, None, None
         if error:
             notice.set((error, True))
-        elif connecting:
-            dialogue, active_label = connecting
-        elif asking and trial is asking[0]:
+        elif apply:
             try:
-                trial.apply_question(asking[1], result)
+                apply(result)
             except GameError as rejected:
                 notice.set((str(rejected), True))
-            else:
-                draft_question = ""
         revision.set(revision.get() + 1)
 
     def bind(button, action):
@@ -359,7 +361,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             revision.set(revision.get() + 1)
 
     def connect_model():
-        nonlocal dialogue, active_label, mode, pending_connection
+        nonlocal dialogue, active_label, mode
         if dialogue is not None:
             return
         mode = input.model_mode()
@@ -380,8 +382,11 @@ def server(input: Inputs, output: Outputs, session: Session):
             label = f"OpenAI · {adapter.model}"
         else:
             raise GameError("Choose a supported dialogue mode.")
-        pending_connection = adapter, label
-        submit(lambda: verify_connection(adapter))
+        def connected(_):
+            nonlocal dialogue, active_label
+            dialogue, active_label = adapter, label
+
+        submit(lambda: verify_connection(adapter), connected)
 
     def change_model():
         nonlocal dialogue, active_label
@@ -390,7 +395,15 @@ def server(input: Inputs, output: Outputs, session: Session):
         dialogue, active_label = None, "Model setup"
 
     def investigate():
-        return f"Investigated {game.investigate(input.lead() or '')}."
+        request = chat.bounded(input.lead() or "", chat.LEAD_LIMIT)
+        adapter = dialogue
+        if not isinstance(adapter, StructuredDialogue):
+            return f"Investigated {game.investigate(request)}."
+        leads = game.available_leads()
+        submit(
+            lambda: adapter.find_lead(request, leads),
+            lambda lead: game.reveal_lead(request, lead),
+        )
 
     def start_trial():
         nonlocal trial
@@ -405,7 +418,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         return trial
 
     def ask():
-        nonlocal pending_question, draft_question
+        nonlocal draft_question
         active = require_trial()
         draft_question = input.question() or ""
         if mode == "practice":
@@ -413,9 +426,14 @@ def server(input: Inputs, output: Outputs, session: Session):
             draft_question = ""
             return
         request = active.prepare_question(draft_question)
-        pending_question = active, request
         adapter = active.dialogue
-        submit(lambda: adapter.interpret(request.question, request.eligible, request.context))
+
+        def apply(plan):
+            nonlocal draft_question
+            active.apply_question(request, plan)
+            draft_question = ""
+
+        submit(lambda: adapter.interpret(request.question, request.eligible, request.context), apply)
 
     def hear_verdict():
         nonlocal verdict
@@ -444,9 +462,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         draft_question = ""
 
     def clear_model():
-        nonlocal dialogue, trial, pending_connection, pending_question, in_flight
+        nonlocal dialogue, trial, complete_model, in_flight
         model_call.cancel()
-        dialogue, trial, pending_connection, pending_question, in_flight = None, None, None, None, None
+        dialogue, trial, complete_model, in_flight = None, None, None, None
 
     session.on_ended(clear_model)
 
@@ -487,7 +505,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         elif view.phase == Phase.WITNESS_SELECTION:
             pane = choose_witnesses(view)
         elif view.phase == Phase.INVESTIGATION:
-            pane = investigation(view)
+            pane = investigation(view, game, in_flight is not None)
         else:
             pane = ui.div(
                 briefing(view),

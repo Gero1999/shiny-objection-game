@@ -19,6 +19,8 @@ clock, and a dry-store receipt offer different ways into the case.
 | **Trial** | Question your witnesses, cross-examine the rival’s, and offer exhibits. Object to improper moves and respond when opposing counsel objects. |
 | **Verdict** | Make a closing argument. The jury explains its verdict from the admitted record. If there’s a conviction, the court considers mitigation. |
 
+Investigation messages have a 240-character limit. The chat returns the evidence and witness profiles for the matched lead.
+
 > **Try a lead.** Enter “check the key cabinet,” then ask the clerk who kept
 > the register. Establishing its source gives you a foundation to offer it
 > as evidence.

@@ -4,11 +4,9 @@ import re
 from dataclasses import dataclass
 from enum import StrEnum
 
+from . import chat
 from .cases import CaseDefinition, Side
-
-
-class GameError(ValueError):
-    """An action could not be applied in the current playthrough."""
+from .errors import GameError as GameError
 
 
 class Phase(StrEnum):
@@ -66,6 +64,7 @@ class Game:
         self.discovered_witnesses: set[str] = set()
         self.player_lineup: tuple[str, ...] = ()
         self.rival_lineup: tuple[str, ...] = ()
+        self.lead_chat: list[tuple[str, str]] = []
 
     @property
     def investigations_left(self) -> int:
@@ -76,27 +75,44 @@ class Game:
         self.side = Side(side)
         self.phase = Phase.INVESTIGATION
 
-    def investigate(self, request: str) -> str:
+    def available_leads(self) -> dict:
         self._require_phase(Phase.INVESTIGATION)
         if self.investigations_left == 0:
             raise GameError("You have used your investigation slots. Choose your witnesses.")
+        return {key: lead for key, lead in self.case.leads.items()
+                if self.completed_leads.issuperset(lead.requires)}
+
+
+    def investigate(self, request: str) -> str:
+        request = chat.bounded(request, chat.LEAD_LIMIT)
         query = words(request)
         matched = [
-            key for key, lead in self.case.leads.items()
-            if self.completed_leads.issuperset(lead.requires)
-            and any(mentions(query, alias) for alias in lead.aliases)
+            key for key, lead in self.available_leads().items()
+            if any(mentions(query, alias) for alias in lead.aliases)
         ]
         if not matched:
             raise GameError("Try a specific place, object, or person from the case briefing.")
         if len(matched) > 1:
             raise GameError("That could be more than one lead. Investigate one at a time.")
-        key, = matched
+        return self.reveal_lead(request, matched[0])
+
+
+    def reveal_lead(self, request: str, key: str | None) -> str:
+        request = chat.bounded(request, chat.LEAD_LIMIT)
+        lead = self.available_leads().get(key)
+        if lead is None:
+            raise GameError("Try a specific place, object, or person from the case briefing.")
         if key in self.completed_leads:
             raise GameError("You have already investigated that lead.")
-        lead = self.case.leads[key]
         self.completed_leads.add(key)
         self.discovered_exhibits.update(lead.exhibits)
         self.discovered_witnesses.update(lead.witnesses)
+        discoveries = [
+            f"{item.title}. {item.text}" for item in (self.case.exhibits[id_] for id_ in lead.exhibits)
+        ] + [
+            f"{item.name}. {item.profile}" for item in (self.case.witnesses[id_] for id_ in lead.witnesses)
+        ]
+        self.lead_chat.append((request, " ".join(discoveries) or lead.label))
         return lead.label
 
     def finish_investigation(self) -> None:
