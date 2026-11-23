@@ -22,10 +22,29 @@ Each case has an authored set of facts, evidence, and character motivations.
 Players will be able to connect a hosted model using their own API token or use
 an Ollama connection for dialogue.
 
-## Project status
+## Run the first case
 
-The game is in design. This repository contains the project context and
-planning documents. See [AGENTS.md](AGENTS.md) for the development guidelines.
+Use Python 3.11 or later.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m shiny run app.py
+```
+
+Follow the local URL shown by Shiny. **The Annex Ledger** runs in scripted
+practice mode. Try a lead such as “check the key cabinet,” then ask witnesses
+about the records they handle or what they saw. The practice mode matches
+questions to authored testimony. Hosted-model and Ollama connections are
+planned in the [technical architecture](docs/architecture.md).
+
+Run the engine tests from the repository root with
+`python -m unittest discover -s tests -v`.
+
+## Project documents
+
+See [AGENTS.md](AGENTS.md) for the development guidelines.
 
 - [Game design](docs/game-design.md)
 - [Case authoring](docs/case-authoring.md)

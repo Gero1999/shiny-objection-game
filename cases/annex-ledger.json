@@ -4,7 +4,7 @@
   "title": "The Annex Ledger",
   "jurisdiction": "Common Court of Bellmarsh",
   "charge": "Knowingly removing a civic record without authorization",
-  "briefing": "Police found the North Annex ledger missing from its assigned shelf at the closing count. Archivist Neri Vale was assigned the last shift. Nobody in the opening report claims to have seen the ledger leave.",
+  "briefing": "Police found the North Annex ledger missing from its assigned shelf at the closing count. Archivist Neri Vale was assigned the last shift. Nobody in the opening report claims to have seen the ledger leave. Officers noted four places to follow up: the key cabinet, the closing-round hallway, the dry store, and the transfer desk.",
   "private_truth": "Neri took the ledger off its shelf before the closing count and delivered it to the dry store to protect it from a leak. Neri told the courier where it was going and signed the 19:08 handoff receipt. There was no recorded authorization for the move. The clerk also lent out the spare key that evening, giving someone else access to the room.",
   "opening_exhibits": ["closing-inventory"],
   "lead_budget": 3,
@@ -29,7 +29,7 @@
     },
     "transfer-desk": {
       "label": "Transfer desk",
-      "aliases": ["transfer desk", "permission", "authorization", "supervisor", "maintenance", "leak"],
+      "aliases": ["transfer desk", "permission", "permissions", "authorization", "supervisor", "maintenance", "leak"],
       "exhibits": ["transfer-register", "maintenance-log"],
       "witnesses": ["sen"]
     }
