@@ -1,5 +1,7 @@
 """Shiny front end for the scripted first case."""
 
+from shiny_objection.models import StructuredDialogue
+
 import asyncio
 import os
 import secrets
@@ -58,14 +60,18 @@ def briefing(view: PlayerView):
     )
 
 
-def investigation(view: PlayerView):
+def investigation(view: PlayerView, game: Game, waiting: bool):
     return ui.div(
         ui.h2("Investigation"),
         ui.p(f"Remaining investigation leads · {view.investigations_left}", class_="status-line"),
         ui.p("Find at least two witnesses. Describe one place, record, or person to investigate."),
-        ui.input_text("lead", "Lead to investigate", placeholder="Check the key cabinet", width="100%"),
+        ui_chat.log(game.lead_chat, "Investigation"),
+        ui.p("Checking the lead…", role="status") if waiting else ui_chat.input_area(
+            "lead", f"Lead · {chat.LEAD_LIMIT} characters", chat.LEAD_LIMIT,
+            placeholder="Check the key cabinet", rows=2,
+        ),
         ui.div(
-            ui.input_action_button("investigate", "Investigate", class_="btn-primary"),
+            ui.input_action_button("investigate", "Send", class_="btn-primary", disabled=waiting),
             ui.input_action_button("finish_investigation", "Choose witnesses", class_="btn-outline-primary"),
             class_="actions",
         ),
@@ -439,7 +445,15 @@ def server(input: Inputs, output: Outputs, session: Session):
             submit(interpret, apply)
 
     def investigate():
-        return f"Investigated {game.investigate(input.lead() or '')}."
+        request = chat.bounded(input.lead() or "", chat.LEAD_LIMIT)
+        adapter = dialogue
+        if not isinstance(adapter, StructuredDialogue):
+            return f"Investigated {game.investigate(request)}."
+        leads = game.available_leads()
+        submit(
+            lambda: adapter.find_lead(request, leads),
+            lambda lead: game.reveal_lead(request, lead),
+        )
 
     def start_trial():
         nonlocal trial
@@ -545,7 +559,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         elif view.phase == Phase.WITNESS_SELECTION:
             pane = choose_witnesses(view)
         elif view.phase == Phase.INVESTIGATION:
-            pane = investigation(view)
+            pane = investigation(view, game, in_flight is not None)
         else:
             pane = ui.div(
                 briefing(view),
