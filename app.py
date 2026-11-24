@@ -7,6 +7,8 @@ import os
 import secrets
 from pathlib import Path
 
+from shiny_objection.outcome import rival_closing, verdict_summary
+
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 
 from shiny_objection import chat, ui_chat
@@ -161,7 +163,8 @@ def closing(trial: Trial):
     }
     return ui.div(
         ui.h2("Closing argument"),
-        ui.input_text_area("closing_text", "Address the jury", width="100%", rows=4),
+        ui.div(ui.strong("Rival closing"), ui.p(rival_closing(trial)), class_="pending-move"),
+        ui_chat.input_area("closing_text", f"Your closing · {chat.CLOSING_LIMIT} characters", chat.CLOSING_LIMIT, rows=4),
         ui.input_selectize("citations", "Cite admitted record entries (optional)", options, multiple=True, width="100%"),
         ui.input_action_button("deliberate", "Hear the verdict", class_="btn-primary"),
     )
@@ -186,6 +189,7 @@ def verdict_view(trial: Trial, verdict: Verdict, sentence_result: SentenceResult
         ui.p("Jury verdict", class_="status-line"),
         ui.h2(result),
         ui.p(f"{winner_name} secured {outcome}."),
+        ui.p(verdict_summary(verdict)),
         ui.tags.details(
             ui.tags.summary("Your closing argument"),
             ui.p(verdict.closing_argument),

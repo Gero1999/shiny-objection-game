@@ -27,6 +27,8 @@ Investigation messages have a 240-character limit. The chat returns the evidence
 > the register. Establishing its source gives you a foundation to offer it
 > as evidence.
 
+The rival gives their closing first. Your reply can be up to 480 characters.
+
 ## Run the game
 
 Requires Python 3.11 or later. From the repository root:

@@ -120,6 +120,7 @@ class CaseDefinition:
     witnesses: Mapping[str, Witness]
     rival_witnesses: Mapping[Side, tuple[str, ...]]
     rival_exhibits: Mapping[Side, tuple[str, ...]]
+    rival_closings: Mapping[Side, str]
     elements: tuple[Element, ...]
     sentence: Sentence
 
@@ -202,6 +203,7 @@ def _parse(data: dict) -> CaseDefinition:
         rival_exhibits=MappingProxyType({
             side: tuple(data["rival"][side]["exhibits"]) for side in Side
         }),
+        rival_closings=MappingProxyType({side: data["rival_closings"][side] for side in Side}),
         elements=elements,
         sentence=Sentence(
             sentence["baseline"], sentence["minimum"], sentence["unit"],
