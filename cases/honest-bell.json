@@ -1,0 +1,255 @@
+{
+  "version": 1,
+  "id": "honest-bell",
+  "title": "The Very Honest Bell",
+  "jurisdiction": "Market Court of Kettlebank",
+  "charge": "Knowingly using misleading evidence to publicly accuse someone of theft",
+  "briefing": "At Kettlebank's market, a little brass bell repeats the last full sentence spoken beside it when someone pulls its cord. At noon it repeated the mayor's voice: “I took the money.” A stallholder photographed a sign calling it a confession. Police found the stall-fee drawer empty. The mayor says she was rehearsing a play. Police charged Pip, the bell keeper, with knowingly using misleading evidence to publicly accuse the mayor of theft. They suggest checking the rehearsal stage, the print shop, the cash office, and the bun stall.",
+  "private_truth": "At 11:40 the mayor and the clerk moved the sealed envelope of stall fees to the bank as authorized. At 11:50 Fig walked Pip through the cue card marked REHEARSAL ONLY. Pip initialed it. At noon, as rehearsed, the mayor read “In this scene, I am the thief. I took the money.” Pip pulled the cord and put up a sign calling the line a confession. Pip knew the line was fictional but thought the mayor must have done something wrong with the missing money. Pip later pulled the sign down and posted a correction before police arrived. Fig gave Pip a clean copy of the cue card after the bell, which Bun mistook for the original.",
+  "client": {
+    "name": "Pip",
+    "greeting": "The bell said exactly what she said. I wish the sign had been that careful.",
+    "statements": {
+      "pip-sign": {
+        "text": "I pulled the cord and hung the sign. The cash drawer was empty, and I've never seen the mayor volunteer for anything without scissors and a ribbon.",
+        "topics": ["bell", "cord", "sign", "cash", "mayor", "confession"]
+      },
+      "pip-rehearsal": {
+        "text": "Fig showed me the cue card before noon. I knew it was a line from the play. Ask Bun about the copy that made it to the counter.",
+        "topics": ["play", "rehearsal", "cue", "card", "fig", "bun", "copy"]
+      },
+      "pip-correction": {
+        "text": "I took the sign down and pinned up a correction before the officers turned up. Dot saw me do it.",
+        "topics": ["correction", "apology", "dot", "police"]
+      }
+    }
+  },
+  "opening_exhibits": ["patrol-note"],
+  "lead_budget": 3,
+  "leads": {
+    "rehearsal-stage": {
+      "label": "Rehearsal stage",
+      "aliases": ["stage", "rehearsal", "play", "script", "cue card", "fig"],
+      "exhibits": ["cue-card"],
+      "witnesses": ["fig"]
+    },
+    "print-shop": {
+      "label": "Print shop",
+      "aliases": ["print shop", "printer", "poster", "sign", "peg", "printing"],
+      "exhibits": ["confession-sign"],
+      "witnesses": ["peg"]
+    },
+    "cash-office": {
+      "label": "Cash office",
+      "aliases": ["cash office", "cash", "bank", "money", "envelope", "dot", "correction"],
+      "exhibits": ["bank-receipt", "correction-slip"],
+      "witnesses": ["dot"]
+    },
+    "bun-stall": {
+      "label": "Bun stall",
+      "aliases": ["bun stall", "bun", "bakery", "pastry", "counter", "rehearsal book"],
+      "exhibits": ["rehearsal-book"],
+      "witnesses": ["bun"]
+    }
+  },
+  "exhibits": {
+    "patrol-note": {
+      "title": "Patrol note",
+      "text": "At noon the market bell repeated “I took the money” in the mayor's voice. Officers found the stall-fee drawer empty during their initial check."
+    },
+    "cue-card": {
+      "title": "Rehearsal cue card",
+      "text": "Top copy marked REHEARSAL ONLY. The mayor's cue reads “In this scene, I am the thief. I took the money.” Bottom corner initialed P.",
+      "foundation": ["fig-cue"]
+    },
+    "confession-sign": {
+      "title": "Confession sign",
+      "text": "A stallholder's photograph, filed with the patrol note, shows the sign beside the bell at noon. It reads “THE MAYOR ADMITS STEALING THE STALL FEES.” The sign is signed Pip."
+    },
+    "bank-receipt": {
+      "title": "Certified bank receipt",
+      "text": "The market bank accepted the sealed stall-fee envelope at 11:40 as the scheduled deposit. The amount matched the market's cash count."
+    },
+    "correction-slip": {
+      "title": "Correction slip",
+      "text": "“The bell played a line from the rehearsal. I was wrong about the mayor. — Pip.”",
+      "foundation": ["dot-correction"]
+    },
+    "rehearsal-book": {
+      "title": "Rehearsal book",
+      "text": "Fig's copy log lists two handoffs to Pip. The original, initialed by Pip, went over at 11:50 by the stage. A clean copy was delivered to the bun counter at 12:05."
+    }
+  },
+  "witnesses": {
+    "fig": {
+      "name": "Fig",
+      "profile": "The stagehand ran the noon rehearsal.",
+      "motive": "Wants the show to go ahead and resents the suggestion that the mayor improvised. Read the warning to Pip and watched Pip initial the original.",
+      "demeanor": "Treats questions like stage cues. Proud of starting on time and quietly appalled by bad signage.",
+      "statements": {
+        "fig-cue": {
+          "text": "I read Pip the REHEARSAL ONLY header and the mayor's cue before noon. Pip initialed the card while I held the clipboard.",
+          "topics": ["cue card", "initialed", "warning", "clipboard", "read", "foundation"]
+        },
+        "fig-line": {
+          "delivery": "Fig supplies the pause exactly as rehearsed.",
+          "text": "The mayor said, ‘In this scene, I am the thief. I took the money.’ The bell dropped the setup. It always keeps just the last sentence.",
+          "topics": ["full line", "before that", "mayor say", "rehearsed", "sentence"]
+        },
+        "fig-poster": {
+          "text": "My back was to the sign when the bell rang. I was waiting for a pause to move the scenery.",
+          "topics": ["sign", "poster", "back", "scenery", "where were you"]
+        },
+        "fig-two-copies": {
+          "text": "Those are my two entries. I handed Pip the initialed original by the stage before noon. The one Bun saw me bring afterward was a clean copy.",
+          "topics": ["two copies", "both copies", "clean copy", "original", "copy log", "rehearsal book"],
+          "requires_exhibits": ["rehearsal-book"]
+        }
+      },
+      "scripts": {
+        "direct": [
+          {"text": "Offer the patrol note.", "exhibit": "patrol-note"},
+          {"text": "Offer the confession sign.", "exhibit": "confession-sign"},
+          {"text": "Offer the certified bank receipt.", "exhibit": "bank-receipt"},
+          {"text": "How did you explain the cue card to Pip?", "statement": "fig-cue"},
+          {"text": "Offer the rehearsal cue card.", "exhibit": "cue-card"},
+          {"text": "What exactly did the mayor say?", "statement": "fig-line"}
+        ],
+        "cross": [
+          {"text": "You were facing away from the sign, weren't you?", "statement": "fig-poster", "grounds": ["Leading"]},
+          {"text": "What did the mayor say before the sentence we heard from the bell?", "statement": "fig-line"}
+        ]
+      },
+      "departures": {
+        "direct": {"text": "Pip knew everyone would think the mayor had stolen the money, didn't you think?", "grounds": ["Leading", "Speculation"]}
+      }
+    },
+    "peg": {
+      "name": "Peg",
+      "profile": "The printer made Pip's market sign.",
+      "motive": "Fears losing the mayor as a customer. Kept Pip's printing instructions and watched Pip hang the sign.",
+      "demeanor": "Fussy about punctuation. Says ‘uppercase’ like a diagnosis.",
+      "statements": {
+        "peg-print": {
+          "text": "Pip ordered that sign and hung it beside the bell. I suggested a question mark. Pip said a confession should be in uppercase and take up the whole board.",
+          "topics": ["sign", "printed", "hung", "poster", "question mark", "uppercase"]
+        },
+        "peg-drawer": {
+          "text": "I never looked in the cash drawer. I'm the printer. People only tell me the boring half of a scandal until they need twenty copies.",
+          "topics": ["cash", "drawer", "money", "looked"]
+        }
+      },
+      "scripts": {
+        "direct": [
+          {"text": "What did Pip ask you to print?", "statement": "peg-print"},
+          {"text": "Offer the confession sign.", "exhibit": "confession-sign"},
+          {"text": "Offer the patrol note.", "exhibit": "patrol-note"},
+          {"text": "Offer the certified bank receipt.", "exhibit": "bank-receipt"}
+        ],
+        "cross": [
+          {"text": "You never checked what happened to the money, did you?", "statement": "peg-drawer", "grounds": ["Leading"]}
+        ]
+      }
+    },
+    "dot": {
+      "name": "Dot",
+      "profile": "The market treasurer countersigned the bank deposit.",
+      "motive": "Wants stallholders to know their fees reached the bank. Saw Pip post the correction before the police arrived.",
+      "demeanor": "Methodical with amounts and times. Has very little patience for exclamation marks.",
+      "statements": {
+        "dot-deposit": {
+          "text": "I took the counted stall fees to the bank with the mayor at 11:40. It was our scheduled deposit. The teller counted the exact amount.",
+          "topics": ["bank", "deposit", "envelope", "money", "cash", "fees"]
+        },
+        "dot-correction": {
+          "text": "I saw Pip replace the sign with this correction before the officers arrived. I kept the slip when we cleared the board.",
+          "topics": ["correction", "slip", "took down", "replaced", "apology", "foundation"]
+        },
+        "dot-limits": {
+          "text": "I was at the bank before noon. I didn't see what happened during rehearsal.",
+          "topics": ["rehearsal", "warning", "cue card", "before noon"]
+        }
+      },
+      "scripts": {
+        "direct": [
+          {"text": "Where did the stall fees go?", "statement": "dot-deposit"},
+          {"text": "Offer the certified bank receipt.", "exhibit": "bank-receipt"},
+          {"text": "What did Pip do after the bell rang?", "statement": "dot-correction"},
+          {"text": "Offer the correction slip.", "exhibit": "correction-slip"}
+        ],
+        "cross": [
+          {"text": "You didn't see what Pip was told at rehearsal, did you?", "statement": "dot-limits", "grounds": ["Leading"]}
+        ]
+      },
+      "departures": {
+        "cross": {"text": "Why do you think Pip tried to ruin the mayor's reputation?", "grounds": ["Speculation"]}
+      }
+    },
+    "bun": {
+      "name": "Bun",
+      "profile": "The bun seller had a clear view of the counter and a poor view of the stage.",
+      "motive": "Confident the post-bell handoff was the cue card's first delivery. Genuinely did not know it was a copy.",
+      "demeanor": "Times events by what came out of the oven. Defends a first impression until shown something more reliable.",
+      "statements": {
+        "bun-late": {
+          "text": "Fig handed Pip a rehearsal card at my counter after the bell rang. First I'd seen of it. I assumed Pip hadn't seen it before either.",
+          "topics": ["card", "after", "late", "counter", "first", "handed"]
+        },
+        "bun-view": {
+          "text": "I can't see the stage from the counter. I can see my oven. That is the view I paid for.",
+          "topics": ["view", "stage", "oven", "earlier", "see"]
+        }
+      },
+      "scripts": {
+        "direct": [
+          {"text": "When did you see a rehearsal card reach Pip?", "statement": "bun-late"},
+          {"text": "What could you see from your counter?", "statement": "bun-view"}
+        ],
+        "cross": [
+          {"text": "You couldn't see the stage from your counter, could you?", "statement": "bun-view", "grounds": ["Leading"]}
+        ]
+      }
+    }
+  },
+  "rival": {
+    "prosecution": {
+      "witnesses": ["fig", "peg", "dot", "bun"],
+      "exhibits": ["confession-sign", "cue-card", "bank-receipt"]
+    },
+    "defense": {
+      "witnesses": ["bun", "dot", "peg", "fig"],
+      "exhibits": ["bank-receipt", "correction-slip"]
+    }
+  },
+  "rival_closings": {
+    "prosecution": "The bell repeated real words. The question is what Pip publicly claimed those words meant, and whether Pip already knew they came from a play. Check the wording of the sign, where the money went, and who can actually place the cue card in Pip's hands before noon.",
+    "defense": "The bell gives you one sentence. The witnesses give you pieces of an afternoon. Check when Pip received the rehearsal cue, what each witness could see, and whether the court can be sure Pip understood the line when the sign went up."
+  },
+  "elements": [
+    {
+      "label": "Pip publicly accused the mayor of stealing the stall fees",
+      "alternatives": [["patrol-note", "confession-sign"]]
+    },
+    {
+      "label": "The stall fees went to the bank as an authorized deposit",
+      "alternatives": [["bank-receipt"]]
+    },
+    {
+      "label": "Pip knew the bell had repeated a line from rehearsal",
+      "alternatives": [["cue-card", "fig-cue"]],
+      "contradictions": {"bun-late": ["fig-two-copies"]}
+    }
+  ],
+  "sentence": {
+    "baseline": 6,
+    "minimum": 2,
+    "unit": "hours of market service",
+    "factors": [
+      {
+        "label": "Pip posted a correction before police arrived",
+        "requires": ["correction-slip", "dot-correction"],
+        "reduction": 3
+      }
+    ]
+  }
+}
