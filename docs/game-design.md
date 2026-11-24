@@ -11,6 +11,7 @@ they would do differently on a replay.
 | --- | --- | --- |
 | Connection | Enter a hosted model token or connect to Ollama. | Check the selected model before starting the round. |
 | Briefing | Read the opening police report and choose a side. | Randomly select an authored case and show only the opening disclosures. Attribute observations and allegations to their sources. |
+| Defense consultation | Ask your client what happened and where to investigate. | Reveal authored client accounts outside the trial record. |
 | Investigation | Describe what to search, inspect, or ask about. | Match the request to an authored lead. Reveal the linked evidence and witness profiles. |
 | Witness selection | Choose two distinct witnesses from the discovered profiles. | Lock the player's selection. Pick two other witnesses using the rival's role-specific order. |
 | Trial | Question witnesses, present exhibits, object, and reply to objections. | Alternate direct and cross-examination, rule on pending moves, and maintain the admitted record. |

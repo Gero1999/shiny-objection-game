@@ -84,7 +84,7 @@ class StructuredDialogue:
             "question": question,
             "recent_exchange": context,
             "statements": [
-                {"id": key, "text": statement.text} for key, statement in eligible.items()
+                {"id": key, "text": statement.text, "delivery": statement.delivery} for key, statement in eligible.items()
             ],
         })
         response = self.complete(_INSTRUCTIONS, data, schema)

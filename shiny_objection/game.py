@@ -4,15 +4,14 @@ import re
 from dataclasses import dataclass
 from enum import StrEnum
 
+from . import chat
 from .cases import CaseDefinition, Side
-
-
-class GameError(ValueError):
-    """An action could not be applied in the current playthrough."""
+from .errors import GameError as GameError
 
 
 class Phase(StrEnum):
     BRIEFING = "briefing"
+    CONSULTATION = "consultation"
     INVESTIGATION = "investigation"
     WITNESS_SELECTION = "witness selection"
     TRIAL = "trial"
@@ -64,6 +63,7 @@ class Game:
         self.completed_leads: set[str] = set()
         self.discovered_exhibits = set(case.opening_exhibits)
         self.discovered_witnesses: set[str] = set()
+        self.interview: list[tuple[str, str]] = []
         self.player_lineup: tuple[str, ...] = ()
         self.rival_lineup: tuple[str, ...] = ()
 
@@ -71,10 +71,25 @@ class Game:
     def investigations_left(self) -> int:
         return self.case.lead_budget - len(self.completed_leads)
 
+    def finish_consultation(self) -> None:
+        self._require_phase(Phase.CONSULTATION)
+        self.phase = Phase.INVESTIGATION
+
+
+    def interview_client(self, question: str, statement_id: str | None) -> None:
+        self._require_phase(Phase.CONSULTATION)
+        question = chat.bounded(question, chat.QUESTION_LIMIT)
+        statement = self.case.client.statements.get(statement_id)
+        if statement_id is not None and statement is None:
+            raise GameError("The client response was unavailable. Try asking again.")
+        reply = statement.text if statement else "Ask me what happened or where you might look."
+        self.interview.append((question, reply))
+
     def choose_side(self, side: Side) -> None:
         self._require_phase(Phase.BRIEFING)
         self.side = Side(side)
-        self.phase = Phase.INVESTIGATION
+        self.phase = Phase.CONSULTATION if side == Side.DEFENSE else Phase.INVESTIGATION
+
 
     def investigate(self, request: str) -> str:
         self._require_phase(Phase.INVESTIGATION)
