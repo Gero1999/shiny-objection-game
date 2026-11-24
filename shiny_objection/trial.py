@@ -213,11 +213,10 @@ class Trial:
         self._require_rival_review()
         self._accept()
 
-    def object(self, ground: Ground, explanation: str = "") -> None:
+    def object(self, ground: Ground) -> None:
         pending = self._require_rival_review()
         ground = Ground(ground)
-        detail = f" {explanation.strip()}" if explanation.strip() else ""
-        self._append("You", f"Objection. {ground.value}.{detail}", Status.SPOKEN)
+        self._append("You", f"Objection. {ground.value}.", Status.SPOKEN)
         self.pending = replace(pending, objection=ground)
         self._resolve_objection("The rival asks to proceed with the move.", rival_reply=True)
 

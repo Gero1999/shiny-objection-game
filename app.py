@@ -125,7 +125,6 @@ def courtroom_controls(trial: Trial, draft_question: str):
         return ui.div(
             move,
             ui.input_select("ground", "Objection ground", options),
-            ui.input_text("objection_reason", "Reason (optional)", width="100%"),
             ui.div(
                 ui.input_action_button("object", "Object", class_="btn-primary"),
                 ui.input_action_button("pass_move", "Let it proceed", class_="btn-outline-primary"),
@@ -536,7 +535,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     bind("ask", ask)
     bind("end_exam", lambda: require_trial().end_examination())
     bind("pass_move", lambda: require_trial().pass_rival_move())
-    bind("object", lambda: require_trial().object(Ground(input.ground()), input.objection_reason() or ""))
+    bind("object", lambda: require_trial().object(Ground(input.ground())))
     bind("reply", lambda: require_trial().reply(input.reply_text() or ""))
     bind("deliberate", hear_verdict)
     bind("sentence", hear_sentence)
