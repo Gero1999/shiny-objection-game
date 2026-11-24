@@ -73,9 +73,9 @@ and a plausible objection that the judge overrules.
 
 ## Fictional objection rules
 
-Show a short rule reference in the courtroom. An objection names a ground
-and may include a brief explanation. The side whose move was challenged
-gets one reply. The judge explains the ruling with the rule and relevant
+Show a short rule reference in the courtroom. The player selects a ground
+from the dropdown and clicks **Object**. The side whose move was challenged
+gets one reply. The judge explains the ruling using the rule and relevant
 part of the pending move or record.
 
 | Ground | Sustain when |
