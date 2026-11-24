@@ -266,7 +266,7 @@ class Trial:
             status = Status.STRUCK if move.kind == Kind.ANSWER else Status.EXCLUDED
             speaker = self._witness_name() if move.kind == Kind.ANSWER else self._counsel()
             proof_id = move.statement_id if move.kind == Kind.ANSWER else move.exhibit_id
-            self._append(speaker, move.text, status, proof_id)
+            self._append(speaker, move.text, status, proof_id, kind=move.kind)
             self.pending = None
         else:
             reason = (

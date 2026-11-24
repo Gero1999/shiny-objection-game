@@ -20,11 +20,21 @@ from shiny_objection.hosted_model import (
 from shiny_objection.models import Dialogue, ModelError, ScriptedDialogue, verify_connection
 from shiny_objection.ollama import DEFAULT_OLLAMA_MODEL, DEFAULT_OLLAMA_URL, OllamaDialogue
 from shiny_objection.outcome import SentenceResult, Verdict, deliberate, sentence
-from shiny_objection.trial import Status, Trial
+from shiny_objection.trial import Kind, Status, Trial
 
 
 ROOT = Path(__file__).resolve().parent
 CASES = tuple(load_case(path) for path in sorted((ROOT / "cases").glob("*.json")))
+PORTRAITS = {
+    (path.parent.name, path.stem): path.relative_to(ROOT / "static").as_posix()
+    for path in (ROOT / "static" / "witnesses").glob("*/*.svg")
+}
+
+
+def witness_portrait(case_id: str, witness_id: str, size: int):
+    src = PORTRAITS.get((case_id, witness_id))
+    if src:
+        return ui.tags.img(src=src, alt="", width=size, height=size, class_="witness-portrait")
 
 
 def consultation(game: Game, waiting: bool):
@@ -100,7 +110,11 @@ def courtroom(view: PlayerView, trial: Trial, waiting: bool, draft_question: str
             f"{turn.acting_side.value.title()} · {turn.examination.value.title()} examination",
             class_="status-line",
         ),
-        ui.h2(witness.name),
+        ui.div(
+            witness_portrait(trial.case.id, witness.id, 64),
+            ui.div(ui.h2(witness.name), ui.p(witness.profile, class_="witness-profile")),
+            class_="witness-heading",
+        ),
         ui.p("Waiting for the witness model…", role="status")
         if waiting else courtroom_controls(trial, draft_question),
     )
@@ -265,8 +279,11 @@ def transcript(trial: Trial):
         ui.tags.ol(*(
             ui.tags.li(
                 ui.div(
+                    witness_portrait(trial.case.id, entry.witness_id, 28)
+                    if entry.kind == Kind.ANSWER and entry.witness_id is not None else None,
                     ui.strong(f"#{entry.number} · {entry.speaker}"),
                     ui.span(entry.status.value, class_="record-status"),
+                    class_="record-heading",
                 ),
                 ui.p(entry.text),
                 class_=f"record {entry.status.name.lower()}",
