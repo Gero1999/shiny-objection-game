@@ -54,6 +54,11 @@ body { background: var(--paper); color: var(--ink); }
 .pending-move { padding: .7rem .85rem; margin: .75rem 0; border-inline-start: 3px solid var(--gold); background: #f7efdd; }
 .pending-move p:last-child { margin: 0; }
 .objection-label { font-weight: 650; }
+.witness-heading { display: flex; align-items: center; gap: .75rem; margin-bottom: .85rem; }
+.witness-heading h2 { margin-bottom: .15rem; }
+.witness-profile { margin: 0; color: var(--muted); }
+.witness-portrait { flex: none; }
+.record-heading .witness-portrait { margin-right: .4rem; }
 .offer-row { display: flex; gap: .5rem; align-items: end; flex-wrap: wrap; margin: .85rem 0; }
 .offer-row .shiny-input-container { flex: 1 1 13rem; margin-bottom: 0; }
 .record-list { list-style: none; margin: 0; padding: 0; max-height: 26rem; overflow: auto; }
