@@ -63,6 +63,7 @@ outcome from the trial record.
 
 ## Project docs
 
+- [Game workflow](docs/game-workflow.md) shows the screens and decisions from setup through the verdict.
 - [Game design](docs/game-design.md) explains the player flow and rules of the fictional court.
 - [Case authoring](docs/case-authoring.md) covers how evidence, witnesses, and testimony fit together.
 - [Technical architecture](docs/architecture.md) describes the engine, Shiny session, and model adapters.
