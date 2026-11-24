@@ -44,6 +44,7 @@ class Statement:
     topics: tuple[str, ...]
     requires_exhibits: tuple[str, ...]
     notice_purpose: bool
+    delivery: str = ""
 
 
 @dataclass(frozen=True)
@@ -59,9 +60,17 @@ class Witness:
     name: str
     profile: str
     motive: str
+    demeanor: str
     statements: Mapping[str, Statement]
     scripts: Mapping[Examination, tuple[ScriptedMove, ...]]
     departures: Mapping[Examination, ScriptedMove]
+
+
+@dataclass(frozen=True)
+class Client:
+    name: str
+    greeting: str
+    statements: Mapping[str, Statement]
 
 
 @dataclass(frozen=True)
@@ -103,6 +112,7 @@ class CaseDefinition:
     charge: str
     briefing: str
     private_truth: str
+    client: Client
     opening_exhibits: tuple[str, ...]
     lead_budget: int
     leads: Mapping[str, Lead]
@@ -124,6 +134,16 @@ def _script(move: dict) -> ScriptedMove:
     )
 
 
+def _statements(data: dict) -> Mapping[str, Statement]:
+    return MappingProxyType({
+        key: Statement(
+            item["text"], tuple(item["topics"]), tuple(item.get("requires_exhibits", [])),
+            item.get("notice_purpose", False), item.get("delivery", ""),
+        )
+        for key, item in data.items()
+    })
+
+
 def _parse(data: dict) -> CaseDefinition:
     exhibits = {
         key: Exhibit(item["title"], item["text"], tuple(item.get("foundation", [])))
@@ -131,15 +151,7 @@ def _parse(data: dict) -> CaseDefinition:
     }
     witnesses = {}
     for key, item in data["witnesses"].items():
-        statements = {
-            statement_id: Statement(
-                statement["text"],
-                tuple(statement["topics"]),
-                tuple(statement.get("requires_exhibits", [])),
-                statement.get("notice_purpose", False),
-            )
-            for statement_id, statement in item["statements"].items()
-        }
+        statements = _statements(item["statements"])
         scripts = {
             exam: tuple(_script(move) for move in item["scripts"][exam])
             for exam in Examination
@@ -149,8 +161,8 @@ def _parse(data: dict) -> CaseDefinition:
             for exam, move in item.get("departures", {}).items()
         }
         witnesses[key] = Witness(
-            item["name"], item["profile"], item["motive"],
-            MappingProxyType(statements), MappingProxyType(scripts), MappingProxyType(departures),
+            item["name"], item["profile"], item["motive"], item.get("demeanor", ""),
+            statements, MappingProxyType(scripts), MappingProxyType(departures),
         )
 
     leads = {
@@ -179,6 +191,7 @@ def _parse(data: dict) -> CaseDefinition:
         charge=data["charge"],
         briefing=data["briefing"],
         private_truth=data["private_truth"],
+        client=Client(data["client"]["name"], data["client"]["greeting"], _statements(data["client"]["statements"])),
         opening_exhibits=tuple(data["opening_exhibits"]),
         lead_budget=data["lead_budget"],
         leads=MappingProxyType(leads),

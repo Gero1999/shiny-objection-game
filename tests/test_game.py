@@ -20,6 +20,7 @@ class GameTests(unittest.TestCase):
 
     def test_failed_and_duplicate_leads_do_not_spend_budget(self):
         self.game.choose_side(Side.DEFENSE)
+        self.game.finish_consultation()
         for request in ("", "Explain every secret", "Check the key cabinet and dry store"):
             with self.assertRaises(GameError):
                 self.game.investigate(request)
@@ -40,15 +41,25 @@ class GameTests(unittest.TestCase):
             self.game.choose_witnesses(("mira", "lio"))
         self.assertEqual(self.game.phase, Phase.WITNESS_SELECTION)
         self.assertNotIn("key-register", {item.id for item in self.game.view().exhibits})
-        self.game.choose_witnesses(("lio", "sen"))
+        self.game.choose_witnesses(("lio",))
         view = self.game.view()
-        self.assertEqual(view.player_lineup, ("lio", "sen"))
-        self.assertEqual(view.rival_lineup, ("mira", "ivo"))
+        self.assertEqual(view.player_lineup, ("lio",))
+        self.assertEqual(view.rival_lineup, ("sen",))
         self.assertIn("key-register", {item.id for item in view.exhibits})
 
     def test_sessions_do_not_share_discoveries(self):
         another = Game(self.case, seed=2)
         self.game.choose_side(Side.DEFENSE)
+        self.game.finish_consultation()
         self.game.investigate("Check the closing clock")
         self.assertEqual([exhibit.id for exhibit in another.view().exhibits], ["closing-inventory"])
         self.assertEqual(another.phase, Phase.BRIEFING)
+
+    def test_defense_can_interview_client_before_investigation(self):
+        self.game.choose_side(Side.DEFENSE)
+        self.assertEqual(self.game.phase, Phase.CONSULTATION)
+        with self.assertRaises(GameError):
+            self.game.investigate("dry store")
+        self.game.interview_client("Where did you take the ledger?", "client-move")
+        self.assertIn("dry store", self.game.interview[-1][1])
+        self.assertEqual(self.game.discovered_exhibits, {"closing-inventory"})
