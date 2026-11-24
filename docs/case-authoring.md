@@ -54,7 +54,7 @@ playable case needs a complete timeline, cast, and proof map.
 
 - Check that the briefing discloses only its listed exhibits and statements.
 - Walk all investigation paths that can reach the budget. Confirm the player
-  can choose two witnesses and the rival still has two distinct choices.
+  can choose a witness and the rival can call a different one.
 - Confirm every reveal, statement condition, exhibit, and proof combination
   refers to an existing case ID.
 - Play one route to a supported conviction and one to an acquittal. Confirm

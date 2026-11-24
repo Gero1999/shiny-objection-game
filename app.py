@@ -80,9 +80,9 @@ def investigation(view: PlayerView, game: Game, waiting: bool):
 
 def choose_witnesses(view: PlayerView):
     return ui.div(
-        ui.h2("Choose witnesses"),
-        ui.input_checkbox_group(
-            "witnesses", "Choose two witnesses to call",
+        ui.h2("Choose a witness"),
+        ui.input_select(
+            "witness", "Choose one witness to call",
             {witness.id: witness.name for witness in view.witnesses},
         ),
         ui.input_action_button("start_trial", "Start trial", class_="btn-primary"),
@@ -100,11 +100,11 @@ def courtroom(view: PlayerView, trial: Trial, waiting: bool, draft_question: str
         ),
         ui.h2(witness.name),
         ui.p("Waiting for the witness model…", role="status")
-        if waiting else courtroom_controls(view, trial, draft_question),
+        if waiting else courtroom_controls(trial, draft_question),
     )
 
 
-def courtroom_controls(view: PlayerView, trial: Trial, draft_question: str):
+def courtroom_controls(trial: Trial, draft_question: str):
     pending = trial.pending
     if pending is not None:
         move = ui.div(
@@ -141,19 +141,16 @@ def courtroom_controls(view: PlayerView, trial: Trial, draft_question: str):
                 class_="exhibit",
             ),
         )
-    if not trial.player_turn:
-        return ui.input_action_button("rival_next", "Hear rival’s next move", class_="btn-primary")
-
-    exhibits = {"": "Choose an exhibit", **{item.id: item.title for item in view.exhibits}}
     return ui.div(
-        ui.input_text_area("question", "Question for the witness", value=draft_question, width="100%", rows=2),
-        ui.input_action_button("ask", "Ask question", class_="btn-primary"),
-        ui.div(
-            ui.input_select("exhibit", "Exhibit", exhibits, width="100%"),
-            ui.input_action_button("offer", "Offer exhibit", class_="btn-outline-primary"),
-            class_="offer-row",
+        ui_chat.input_area(
+            "question", f"Speak to the court · {chat.QUESTION_LIMIT} characters", chat.QUESTION_LIMIT,
+            value=draft_question, rows=2, placeholder="Who wrote the receipt? Or: Offer the handoff receipt.",
         ),
-        ui.input_action_button("end_exam", "End examination", class_="btn-outline-primary"),
+        ui.div(
+            ui.input_action_button("ask", "Send to court", class_="btn-primary"),
+            ui.input_action_button("end_exam", "End examination", class_="btn-outline-primary"),
+            class_="actions",
+        ),
     )
 
 
@@ -381,6 +378,8 @@ def server(input: Inputs, output: Outputs, session: Session):
                 return
             try:
                 message = action()
+                if trial:
+                    trial.advance_rival()
             except GameError as error:
                 notice.set((str(error), True))
             else:
@@ -459,7 +458,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         nonlocal trial
         if dialogue is None:
             raise GameError("Choose a dialogue mode before starting the trial.")
-        game.choose_witnesses(tuple(input.witnesses() or ()))
+        game.choose_witnesses((input.witness(),))
         trial = Trial(game, dialogue)
 
     def require_trial() -> Trial:
@@ -471,6 +470,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         nonlocal draft_question
         active = require_trial()
         draft_question = input.question() or ""
+        if active.offer_from_chat(draft_question):
+            draft_question = ""
+            return
         if mode == "practice":
             active.ask(draft_question)
             draft_question = ""
@@ -528,9 +530,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     bind("finish_investigation", lambda: game.finish_investigation())
     bind("start_trial", start_trial)
     bind("ask", ask)
-    bind("offer", lambda: require_trial().offer(input.exhibit() or ""))
     bind("end_exam", lambda: require_trial().end_examination())
-    bind("rival_next", lambda: require_trial().rival_next())
     bind("pass_move", lambda: require_trial().pass_rival_move())
     bind("object", lambda: require_trial().object(Ground(input.ground()), input.objection_reason() or ""))
     bind("reply", lambda: require_trial().reply(input.reply_text() or ""))

@@ -100,8 +100,7 @@
     },
     "transfer-register": {
       "title": "Authorized transfers register",
-      "text": "The annex requires a signed entry for moving an official record. There is no ledger transfer entry for the date in question.",
-      "foundation": ["sen-register"]
+      "text": "The certified annex register requires a signed entry for moving an official record. Its export shows no ledger transfer entry for the date in question."
     },
     "maintenance-log": {
       "title": "Maintenance call log",
@@ -208,10 +207,14 @@
           {"text": "Offer the dry store handoff receipt.", "exhibit": "handoff-receipt"},
           {"text": "What did you see at the handoff?", "statement": "lio-handoff"},
           {"text": "When did the handoff take place?", "statement": "lio-confirmed-time"},
-          {"text": "Offer the police recovery note.", "exhibit": "recovery-note"}
+          {"text": "Offer the police recovery note.", "exhibit": "recovery-note"},
+          {"text": "Offer the certified transfers register.", "exhibit": "transfer-register"}
         ],
         "cross": [
-          {"text": "You never saw who opened the annex door, did you?", "statement": "lio-unsure", "grounds": ["Leading"]}
+          {"text": "You never saw who opened the annex door, did you?", "statement": "lio-unsure", "grounds": ["Leading"]},
+          {"text": "Who signed the handoff receipt?", "statement": "lio-receipt"},
+          {"text": "Offer the handoff receipt.", "exhibit": "handoff-receipt"},
+          {"text": "What did you personally see at the handoff?", "statement": "lio-handoff"}
         ]
       },
       "departures": {
@@ -236,6 +239,8 @@
       },
       "scripts": {
         "direct": [
+          {"text": "Offer the closing inventory.", "exhibit": "closing-inventory"},
+          {"text": "Offer the police recovery note.", "exhibit": "recovery-note"},
           {"text": "What did the transfer register show?", "statement": "sen-register"},
           {"text": "Offer the authorized transfers register.", "exhibit": "transfer-register"},
           {"text": "What happened with the pipe?", "statement": "sen-leak"},
@@ -246,7 +251,7 @@
         ]
       },
       "departures": {
-        "direct": {"text": "Offer the transfers register before asking the witness about it.", "exhibit": "transfer-register"}
+        "direct": {"text": "Offer the maintenance log before asking the witness about it.", "exhibit": "maintenance-log"}
       }
     }
   },
@@ -256,7 +261,7 @@
       "exhibits": ["recovery-note", "handoff-receipt", "transfer-register"]
     },
     "defense": {
-      "witnesses": ["mira", "ivo", "sen", "lio"],
+      "witnesses": ["sen", "mira", "ivo", "lio"],
       "exhibits": ["key-register", "clock-photo", "maintenance-log"]
     }
   },
@@ -272,7 +277,7 @@
     },
     {
       "label": "The move lacked authorization",
-      "alternatives": [["transfer-register", "sen-register"]]
+      "alternatives": [["transfer-register"]]
     }
   ],
   "sentence": {

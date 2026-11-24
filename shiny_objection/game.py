@@ -140,15 +140,15 @@ class Game:
 
     def choose_witnesses(self, witness_ids: tuple[str, ...]) -> None:
         self._require_phase(Phase.WITNESS_SELECTION)
-        if len(witness_ids) != 2 or len(set(witness_ids)) != 2:
-            raise GameError("Choose two different witnesses.")
+        if len(witness_ids) != 1:
+            raise GameError("Choose one witness.")
         if not self.discovered_witnesses.issuperset(witness_ids):
             raise GameError("Choose witnesses discovered during your investigation.")
         assert self.side is not None
         self.player_lineup = tuple(witness_ids)
         self.rival_lineup = tuple(
             key for key in self.case.rival_witnesses[self.side.other] if key not in witness_ids
-        )[:2]
+        )[:1]
         self.phase = Phase.TRIAL
 
     def trial_exhibits(self) -> frozenset[str]:
