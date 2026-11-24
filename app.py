@@ -10,7 +10,9 @@ from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 from shiny_objection import chat, ui_chat
 from shiny_objection.cases import Ground, Side, load_case, select_case
 from shiny_objection.game import Game, GameError, Phase, PlayerView
-from shiny_objection.hosted_model import DEFAULT_HOSTED_MODEL, OpenAIDialogue
+from shiny_objection.hosted_model import (
+    DEFAULT_HOSTED_MODEL, OpenAIDialogue, accepts_browser_token, is_local_connection,
+)
 from shiny_objection.models import Dialogue, ModelError, ScriptedDialogue, verify_connection
 from shiny_objection.ollama import DEFAULT_OLLAMA_MODEL, DEFAULT_OLLAMA_URL, OllamaDialogue
 from shiny_objection.outcome import SentenceResult, Verdict, deliberate, sentence
@@ -282,7 +284,7 @@ def notice_view(status):
     return ui.p(message, class_="notice error" if failed else "notice", role="alert" if failed else "status")
 
 
-def connection_screen(mode: str, models: dict[str, str], waiting: bool, status):
+def connection_screen(mode: str, models: dict[str, str], waiting: bool, status, local_key: bool, secure: bool):
     return ui.div(
         ui.h1("Choose how to play"),
         notice_view(status),
@@ -300,8 +302,11 @@ def connection_screen(mode: str, models: dict[str, str], waiting: bool, status):
             ui.panel_conditional(
                 "input.model_mode === 'openai'",
                 ui.input_text("openai_model", "OpenAI model", value=models["openai"]),
-                ui.input_password("api_token", "OpenAI API token"),
-                ui.p("The server keeps your token for this session. Model calls may use your API credits."),
+                ui.p("Using the API key configured in your local environment.") if local_key else (
+                    ui.input_password("api_token", "OpenAI API token")
+                    if secure else ui.p("Open this app over HTTPS or on localhost to enter an API key.")
+                ),
+                ui.p("OpenAI calls may use API credits."),
             ),
             ui.input_action_button("connect_model", "Continue to case", class_="btn-primary"),
         ),
@@ -310,6 +315,12 @@ def connection_screen(mode: str, models: dict[str, str], waiting: bool, status):
 
 
 def server(input: Inputs, output: Outputs, session: Session):
+    connection = session.http_conn
+    hostname = connection.url.hostname
+    client = connection.client.host if connection.client else None
+    local = is_local_connection(hostname, client)
+    secure = accepts_browser_token(connection.url.scheme, hostname, client)
+    local_key = os.environ.get("SHINY_OBJECTION_OPENAI_KEY", "").strip() if local else ""
     game = new_game()
     trial: Trial | None = None
     verdict: Verdict | None = None
@@ -386,8 +397,12 @@ def server(input: Inputs, output: Outputs, session: Session):
             label = f"Ollama · {adapter.model}"
         elif mode == "openai":
             models[mode] = (input.openai_model() or "").strip()
-            token = input.api_token() or ""
-            ui.update_text("api_token", value="", session=session)
+            if not secure:
+                raise GameError("Open this app over HTTPS or on localhost to enter an API key.")
+            token = local_key
+            if not token:
+                token = input.api_token() or ""
+                ui.update_text("api_token", value="", session=session)
             adapter = OpenAIDialogue(token, models[mode])
             label = f"OpenAI · {adapter.model}"
         else:
@@ -519,7 +534,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         revision.get()
         status = notice.get()
         if dialogue is None:
-            return connection_screen(mode, models, in_flight is not None, status)
+            return connection_screen(mode, models, in_flight is not None, status, bool(local_key), secure)
         view = game.view()
         if verdict is not None and trial is not None:
             pane = verdict_view(trial, verdict, sentence_result)

@@ -49,3 +49,15 @@ class OpenAIAdapterTests(unittest.TestCase):
         for token in ("", " " * 3, "one\r\ntwo"):
             with self.subTest(token=token), self.assertRaisesRegex(ModelError, "API token"):
                 OpenAIDialogue(token, "gpt-4.1-mini")
+
+
+class TokenTransportTests(unittest.TestCase):
+    def test_accepts_https_and_real_loopback(self):
+        from shiny_objection.hosted_model import accepts_browser_token
+
+        self.assertTrue(accepts_browser_token("wss", "example.com", "192.0.2.4"))
+        self.assertTrue(accepts_browser_token("ws", "localhost", "127.0.0.1"))
+        self.assertTrue(accepts_browser_token("ws", "::1", "::1"))
+        self.assertFalse(accepts_browser_token("ws", "example.com", "127.0.0.1"))
+        self.assertFalse(accepts_browser_token("ws", "localhost", "192.0.2.4"))
+        self.assertFalse(accepts_browser_token("ws", None, None))
