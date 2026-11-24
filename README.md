@@ -12,12 +12,16 @@ A civic ledger is missing at closing. The shift record puts an archivist on
 duty, but the police report can’t say who moved it. A key cabinet, a hallway
 clock, and a dry-store receipt offer different ways into the case.
 
+If you play defense, you can first talk privately with your client about what happened and where to look.
+
 | Stage | Your move |
 | --- | --- |
 | **Briefing** | Read the police report and choose prosecution or defense. |
 | **Investigation** | Describe a lead in your own words. Collect exhibits and choose one witness to call. |
 | **Trial** | Question your witness, cross-examine the rival’s, and type an offer such as “Offer the handoff receipt.” Object to improper moves and respond when opposing counsel objects. |
 | **Verdict** | Make a closing argument. The jury explains its verdict from the admitted record. If there’s a conviction, the court considers mitigation. |
+
+Investigation messages have a 240-character limit. The chat returns the evidence and witness profiles for the matched lead.
 
 > **Try a lead.** Enter “check the key cabinet,” then ask the clerk who kept
 > the register. Establishing its source gives you a foundation to offer it
@@ -43,7 +47,13 @@ practice** is the quickest way to play the full case.
 | --- | --- |
 | **Scripted practice** | Works without credentials. Matches questions to authored testimony. |
 | **Ollama** | Run Ollama and enter the name of an installed model. For a small connection test, pull `smollm2:135m`. The app defaults to `http://127.0.0.1:11434`. Use `SHINY_OBJECTION_OLLAMA_URL` on the Shiny server to configure another endpoint. [Ollama setup](https://github.com/ollama/ollama) |
-| **OpenAI** | Enter your API token and a model that supports structured outputs. The default is `gpt-4.1-mini`. The server holds the token for your session, and calls may use API credits. |
+| **OpenAI** | Enter your API token and a model that supports structured outputs. The default is the lower-cost `gpt-4.1-nano`. The server holds the token for your session, and calls may use API credits. |
+
+For a trusted local run, set `SHINY_OBJECTION_OPENAI_KEY` before starting
+Shiny if you prefer to keep the key out of the browser. Otherwise, the token field
+is available on localhost or over HTTPS. The password field masks the key on
+screen. Shiny receives a browser-entered key and uses it to authenticate to
+OpenAI, so use a server you trust.
 
 Model modes use the active witness’s eligible statements and recent exchanges
 to select an authored answer. The game applies objection rules and decides the

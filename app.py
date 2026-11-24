@@ -1,5 +1,7 @@
 """Shiny front end for the scripted first case."""
 
+from shiny_objection.models import StructuredDialogue
+
 import asyncio
 import os
 import secrets
@@ -10,15 +12,33 @@ from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 from shiny_objection import chat, ui_chat
 from shiny_objection.cases import Ground, Side, load_case, select_case
 from shiny_objection.game import Game, GameError, Phase, PlayerView
-from shiny_objection.hosted_model import DEFAULT_HOSTED_MODEL, OpenAIDialogue
+from shiny_objection.hosted_model import (
+    DEFAULT_HOSTED_MODEL, OpenAIDialogue, accepts_browser_token, is_local_connection,
+)
 from shiny_objection.models import Dialogue, ModelError, ScriptedDialogue, verify_connection
 from shiny_objection.ollama import DEFAULT_OLLAMA_MODEL, DEFAULT_OLLAMA_URL, OllamaDialogue
 from shiny_objection.outcome import SentenceResult, Verdict, deliberate, sentence
-from shiny_objection.trial import QuestionRequest, Status, Trial
+from shiny_objection.trial import Status, Trial
 
 
 ROOT = Path(__file__).resolve().parent
 CASES = tuple(load_case(path) for path in sorted((ROOT / "cases").glob("*.json")))
+
+
+def consultation(game: Game, waiting: bool):
+    return ui.div(
+        ui.h2("Talk with your client"),
+        ui.p(ui.strong(game.case.client.name), " · ", game.case.client.greeting),
+        ui_chat.log(game.interview, game.case.client.name),
+        ui.p("Waiting for your client…", role="status") if waiting else ui.div(
+            ui_chat.input_area("client_question", f"Ask your client · {chat.QUESTION_LIMIT} characters", chat.QUESTION_LIMIT, rows=2),
+            ui.div(
+                ui.input_action_button("interview_client", "Send", class_="btn-primary"),
+                ui.input_action_button("finish_consultation", "Start investigation", class_="btn-outline-primary"),
+                class_="actions",
+            ),
+        ),
+    )
 
 
 def briefing(view: PlayerView):
@@ -40,14 +60,18 @@ def briefing(view: PlayerView):
     )
 
 
-def investigation(view: PlayerView):
+def investigation(view: PlayerView, game: Game, waiting: bool):
     return ui.div(
         ui.h2("Investigation"),
         ui.p(f"Remaining investigation leads · {view.investigations_left}", class_="status-line"),
         ui.p("Find at least two witnesses. Describe one place, record, or person to investigate."),
-        ui.input_text("lead", "Lead to investigate", placeholder="Check the key cabinet", width="100%"),
+        ui_chat.log(game.lead_chat, "Investigation"),
+        ui.p("Checking the lead…", role="status") if waiting else ui_chat.input_area(
+            "lead", f"Lead · {chat.LEAD_LIMIT} characters", chat.LEAD_LIMIT,
+            placeholder="Check the key cabinet", rows=2,
+        ),
         ui.div(
-            ui.input_action_button("investigate", "Investigate", class_="btn-primary"),
+            ui.input_action_button("investigate", "Send", class_="btn-primary", disabled=waiting),
             ui.input_action_button("finish_investigation", "Choose witnesses", class_="btn-outline-primary"),
             class_="actions",
         ),
@@ -263,7 +287,7 @@ def notice_view(status):
     return ui.p(message, class_="notice error" if failed else "notice", role="alert" if failed else "status")
 
 
-def connection_screen(mode: str, models: dict[str, str], waiting: bool, status):
+def connection_screen(mode: str, models: dict[str, str], waiting: bool, status, local_key: bool, secure: bool):
     return ui.div(
         ui.h1("Choose how to play"),
         notice_view(status),
@@ -281,8 +305,11 @@ def connection_screen(mode: str, models: dict[str, str], waiting: bool, status):
             ui.panel_conditional(
                 "input.model_mode === 'openai'",
                 ui.input_text("openai_model", "OpenAI model", value=models["openai"]),
-                ui.input_password("api_token", "OpenAI API token"),
-                ui.p("The server keeps your token for this session. Model calls may use your API credits."),
+                ui.p("Using the API key configured in your local environment.") if local_key else (
+                    ui.input_password("api_token", "OpenAI API token")
+                    if secure else ui.p("Open this app over HTTPS or on localhost to enter an API key.")
+                ),
+                ui.p("OpenAI calls may use API credits."),
             ),
             ui.input_action_button("connect_model", "Continue to case", class_="btn-primary"),
         ),
@@ -291,6 +318,12 @@ def connection_screen(mode: str, models: dict[str, str], waiting: bool, status):
 
 
 def server(input: Inputs, output: Outputs, session: Session):
+    connection = session.http_conn
+    hostname = connection.url.hostname
+    client = connection.client.host if connection.client else None
+    local = is_local_connection(hostname, client)
+    secure = accepts_browser_token(connection.url.scheme, hostname, client)
+    local_key = os.environ.get("SHINY_OBJECTION_OPENAI_KEY", "").strip() if local else ""
     game = new_game()
     trial: Trial | None = None
     verdict: Verdict | None = None
@@ -303,8 +336,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     models = {"ollama": DEFAULT_OLLAMA_MODEL, "openai": DEFAULT_HOSTED_MODEL}
     in_flight: int | None = None
     sequence = 0
-    pending_connection: tuple[Dialogue, str] | None = None
-    pending_question: tuple[Trial, QuestionRequest] | None = None
+    complete_model = None
     draft_question = ""
 
     @reactive.extended_task
@@ -314,8 +346,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         except ModelError as error:
             return ticket, None, str(error)
 
-    def submit(work):
-        nonlocal sequence, in_flight
+    def submit(work, apply):
+        nonlocal sequence, in_flight, complete_model
+        complete_model = apply
         sequence += 1
         in_flight = sequence
         model_call.invoke(sequence, work)
@@ -323,23 +356,18 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(model_call.result)
     def model_finished():
-        nonlocal in_flight, pending_connection, pending_question, dialogue, active_label, draft_question
+        nonlocal in_flight, complete_model
         ticket, result, error = model_call.result()
         if ticket != in_flight:
             return
-        connecting, asking = pending_connection, pending_question
-        pending_connection, pending_question, in_flight = None, None, None
+        apply, complete_model, in_flight = complete_model, None, None
         if error:
             notice.set((error, True))
-        elif connecting:
-            dialogue, active_label = connecting
-        elif asking and trial is asking[0]:
+        elif apply:
             try:
-                trial.apply_question(asking[1], result)
+                apply(result)
             except GameError as rejected:
                 notice.set((str(rejected), True))
-            else:
-                draft_question = ""
         revision.set(revision.get() + 1)
 
     def bind(button, action):
@@ -359,7 +387,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             revision.set(revision.get() + 1)
 
     def connect_model():
-        nonlocal dialogue, active_label, mode, pending_connection
+        nonlocal dialogue, active_label, mode
         if dialogue is not None:
             return
         mode = input.model_mode()
@@ -374,14 +402,21 @@ def server(input: Inputs, output: Outputs, session: Session):
             label = f"Ollama · {adapter.model}"
         elif mode == "openai":
             models[mode] = (input.openai_model() or "").strip()
-            token = input.api_token() or ""
-            ui.update_text("api_token", value="", session=session)
+            if not secure:
+                raise GameError("Open this app over HTTPS or on localhost to enter an API key.")
+            token = local_key
+            if not token:
+                token = input.api_token() or ""
+                ui.update_text("api_token", value="", session=session)
             adapter = OpenAIDialogue(token, models[mode])
             label = f"OpenAI · {adapter.model}"
         else:
             raise GameError("Choose a supported dialogue mode.")
-        pending_connection = adapter, label
-        submit(lambda: verify_connection(adapter))
+        def connected(_):
+            nonlocal dialogue, active_label
+            dialogue, active_label = adapter, label
+
+        submit(lambda: verify_connection(adapter), connected)
 
     def change_model():
         nonlocal dialogue, active_label
@@ -389,8 +424,35 @@ def server(input: Inputs, output: Outputs, session: Session):
             raise GameError("Change the model from the police briefing before choosing a side.")
         dialogue, active_label = None, "Model setup"
 
+    def interview_client():
+        if game.phase != Phase.CONSULTATION or dialogue is None:
+            raise GameError("Start the defense consultation first.")
+        question = chat.bounded(input.client_question() or "", chat.QUESTION_LIMIT)
+        client = game.case.client
+        context = tuple(f"You: {asked}\n{client.name}: {reply}" for asked, reply in game.interview[-3:])
+        adapter = dialogue
+
+        def interpret():
+            return adapter.interpret(question, client.statements, context)
+
+        def apply(plan):
+            game.interview_client(question, plan.statement_id)
+
+        if mode == "practice":
+            apply(interpret())
+        else:
+            submit(interpret, apply)
+
     def investigate():
-        return f"Investigated {game.investigate(input.lead() or '')}."
+        request = chat.bounded(input.lead() or "", chat.LEAD_LIMIT)
+        adapter = dialogue
+        if not isinstance(adapter, StructuredDialogue):
+            return f"Investigated {game.investigate(request)}."
+        leads = game.available_leads()
+        submit(
+            lambda: adapter.find_lead(request, leads),
+            lambda lead: game.reveal_lead(request, lead),
+        )
 
     def start_trial():
         nonlocal trial
@@ -405,7 +467,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         return trial
 
     def ask():
-        nonlocal pending_question, draft_question
+        nonlocal draft_question
         active = require_trial()
         draft_question = input.question() or ""
         if active.offer_from_chat(draft_question):
@@ -416,9 +478,14 @@ def server(input: Inputs, output: Outputs, session: Session):
             draft_question = ""
             return
         request = active.prepare_question(draft_question)
-        pending_question = active, request
         adapter = active.dialogue
-        submit(lambda: adapter.interpret(request.question, request.eligible, request.context))
+
+        def apply(plan):
+            nonlocal draft_question
+            active.apply_question(request, plan)
+            draft_question = ""
+
+        submit(lambda: adapter.interpret(request.question, request.eligible, request.context), apply)
 
     def hear_verdict():
         nonlocal verdict
@@ -447,9 +514,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         draft_question = ""
 
     def clear_model():
-        nonlocal dialogue, trial, pending_connection, pending_question, in_flight
+        nonlocal dialogue, trial, complete_model, in_flight
         model_call.cancel()
-        dialogue, trial, pending_connection, pending_question, in_flight = None, None, None, None, None
+        dialogue, trial, complete_model, in_flight = None, None, None, None
 
     session.on_ended(clear_model)
 
@@ -457,6 +524,8 @@ def server(input: Inputs, output: Outputs, session: Session):
     bind("change_model", change_model)
     bind("prosecution", lambda: game.choose_side(Side.PROSECUTION))
     bind("defense", lambda: game.choose_side(Side.DEFENSE))
+    bind("interview_client", interview_client)
+    bind("finish_consultation", lambda: game.finish_consultation())
     bind("investigate", investigate)
     bind("finish_investigation", lambda: game.finish_investigation())
     bind("start_trial", start_trial)
@@ -479,16 +548,18 @@ def server(input: Inputs, output: Outputs, session: Session):
         revision.get()
         status = notice.get()
         if dialogue is None:
-            return connection_screen(mode, models, in_flight is not None, status)
+            return connection_screen(mode, models, in_flight is not None, status, bool(local_key), secure)
         view = game.view()
         if verdict is not None and trial is not None:
             pane = verdict_view(trial, verdict, sentence_result)
         elif trial is not None:
             pane = courtroom(view, trial, in_flight is not None, draft_question) if trial.turn else closing(trial)
+        elif view.phase == Phase.CONSULTATION:
+            pane = consultation(game, in_flight is not None)
         elif view.phase == Phase.WITNESS_SELECTION:
             pane = choose_witnesses(view)
         elif view.phase == Phase.INVESTIGATION:
-            pane = investigation(view)
+            pane = investigation(view, game, in_flight is not None)
         else:
             pane = ui.div(
                 briefing(view),

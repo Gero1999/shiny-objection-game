@@ -143,6 +143,9 @@ class Trial:
             if entry.witness_id == turn.witness_id and entry.kind is not None
             and entry.status in (Status.SPOKEN, Status.ADMITTED, Status.LIMITED, Status.SHOWN)
         )[-6:]
+        demeanor = self.case.witnesses[turn.witness_id].demeanor
+        if demeanor:
+            context = (f"Witness demeanor: {demeanor}", *context)
         return QuestionRequest(
             question, MappingProxyType(self._eligible_statements()), context, self._question_stamp(),
         )
@@ -307,6 +310,8 @@ class Trial:
             self._append(self._counsel(), move.text, Status.SPOKEN, kind=Kind.QUESTION)
             statement = self._eligible_statements().get(move.statement_id)
             text = statement.text if statement is not None else "Could you ask about something I personally observed?"
+            if statement is not None and statement.delivery:
+                text = f"{statement.delivery} {text}"
             grounds = (Ground.HEARSAY,) if statement is not None and statement.notice_purpose else ()
             self._stage(Move(Kind.ANSWER, text, statement_id=move.statement_id, grounds=grounds), pending.notice_only)
         else:

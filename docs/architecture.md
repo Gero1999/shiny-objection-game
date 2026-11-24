@@ -24,7 +24,7 @@ needs it, such as resuming a case or editing cases outside the repository.
 
 Load and validate each `CaseDefinition` once. Give each Shiny connection a
 fresh `GameState` in its `server` function. Store the case ID and random seed,
-chosen side, investigation budget, disclosed IDs, lineups, current phase,
+chosen side, client conversation, investigation budget, disclosed IDs, lineups, current phase,
 and pending move in that state. Keep discovery, disclosure, and admission
 as separate facts about an exhibit. Draw cases from a list sorted by ID so
 the same list and seed reproduce the draw. With the same seed and player

@@ -10,6 +10,7 @@ writing the questions so the logic stays consistent through a replay.
 | --- | --- |
 | Identity | Stable case ID, display title, format version, and the fictional jurisdiction. |
 | Opening | Police briefing, explicitly attributed statements, and exhibit IDs already disclosed. |
+| Client | Defendant name, greeting, and statements available in the defense consultation. Their account can differ from the private truth or suggest leads. |
 | Charge | The legal elements as defined in this fictional jurisdiction, their required proof combinations, material contradictions, and possible resolutions. |
 | Private facts | What actually happened, the timeline, and plausible competing explanations. Give referenced claims stable IDs. |
 | Leads | Stable IDs, location or topic aliases, prerequisites, and the evidence or witness profiles each lead reveals. |
