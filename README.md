@@ -3,14 +3,23 @@
   <h1>Shiny Objection</h1>
   <p><strong>Follow the evidence. Question the witnesses. Make your case.</strong></p>
   <p>A fictional courtroom game built with Shiny for Python. Play as the prosecutor or the defense attorney and see what you can prove in court.</p>
-  <p><a href="#the-annex-ledger">The first case</a> · <a href="#run-the-game">Run the game</a> · <a href="#dialogue-modes">Dialogue modes</a> · <a href="#project-docs">Project docs</a></p>
+  <p><a href="#cases">Cases</a> · <a href="#run-the-game">Run the game</a> · <a href="#dialogue-modes">Dialogue modes</a> · <a href="#project-docs">Project docs</a></p>
 </div>
 
-## The Annex Ledger
+## Cases
 
-A civic ledger is missing at closing. The shift record puts an archivist on
-duty, but the police report can’t say who moved it. A key cabinet, a hallway
-clock, and a dry-store receipt offer different ways into the case.
+The game randomly picks a case when you start a new hearing.
+
+- **The Annex Ledger.** A civic ledger is missing at closing. A key cabinet,
+  a hallway clock, and a dry-store receipt offer different ways into the case.
+- **The Very Honest Bell.** In the market town of Kettlebank, a bell repeats the
+  mayor saying “I took the money.” The stall fees are missing, and bell keeper
+  Pip is on trial over what he told the market. Can a perfectly accurate quote
+  still mislead a whole town?
+
+![The Very Honest Bell opening screen showing the police briefing, case file, and prosecution and defense buttons](docs/images/honest-bell-briefing.png)
+
+## How to play
 
 If you play defense, you can first talk privately with your client about what happened and where to look.
 
@@ -23,9 +32,9 @@ If you play defense, you can first talk privately with your client about what ha
 
 Investigation messages have a 240-character limit. The chat returns the evidence and witness profiles for the matched lead.
 
-> **Try a lead.** Enter “check the key cabinet,” then ask the clerk who kept
-> the register. Establishing its source gives you a foundation to offer it
-> as evidence.
+> **Try a lead in The Annex Ledger.** Enter “check the key cabinet,” then ask
+> the clerk who kept the register. Establishing its source gives you a
+> foundation to offer it as evidence.
 
 The rival gives their closing first. Your reply can be up to 480 characters.
 
@@ -41,7 +50,7 @@ python -m shiny run app.py
 ```
 
 Open the local URL shown by Shiny and choose a dialogue mode. **Scripted
-practice** is the quickest way to play the full case.
+practice** is the quickest way to play a full case.
 
 ## Dialogue modes
 
