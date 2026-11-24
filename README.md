@@ -17,8 +17,6 @@ The game randomly picks a case when you start a new hearing.
   Pip is on trial over what he told the market. Can a perfectly accurate quote
   still mislead a whole town?
 
-![The Very Honest Bell opening screen showing the police briefing, case file, and prosecution and defense buttons](docs/images/honest-bell-briefing.png)
-
 ## How to play
 
 If you play defense, you can first talk privately with your client about what happened and where to look.
